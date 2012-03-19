@@ -1,0 +1,7 @@
+simple example mountlist for pOS 0.0.1
+--------------------------------------
+
+mountlist = (mountpoint, source, s_source, fstype, options)
+
+/, /dev/block0, <pointer to s_file or s_device>, c_FSPFS, rw
+/cdrom, /dev/block1, <pointer to s_file or s_device>. c_FSPFS, ro

@@ -1,0 +1,128 @@
+/*
+ * types.h
+ * 01/25/03
+ * pOS standard types
+ */
+
+#ifndef __TYPES_H
+#define __TYPES_H
+
+#ifdef  __16BITMEM
+#define BYTE   unsigned char
+#define WORD   unsigned int
+#define DWORD  unsigned long
+#define MEMVAR WORD
+//#define BOOL BYTE
+#elif  defined (__32BITMEM)
+#define BYTE   unsigned char
+#define WORD   unsigned short
+#define DWORD  unsigned int
+#define MEMVAR DWORD
+//#define BOOL DWORD
+#endif
+#endif
+
+#define NULL ((void *) 0)
+#define TRUE -1
+#define FALSE 0
+
+/* if compiler complains about missing declraration, umcomment this:
+struct __DEVINFO;
+struct __FILEINFO;
+struct __MEMBINFO;
+struct __MNTINFO;
+struct __PROCINFO;
+struct __TASKINFO;
+struct __TIMEINFO;
+*/
+
+typedef struct __DEVINFO DEVINFO;
+typedef struct __FILEINFO FILEINFO;
+typedef struct __MEMBINFO MEMBINFO;
+typedef struct __MNTINFO MNTINFO;
+typedef struct __PROCINFO PROCINFO;
+typedef struct __TASKINFO TASKINFO;
+typedef struct __TIMEINFO TIMEINFO;
+
+typedef SIGNALPROC void (*) (void);
+
+typedef struct __DEVINFO {
+
+	char filename [8];  // shall we use this for the driver
+			// or the dev-string in the kernel ??
+	BYTE owner;
+	BYTE type;
+
+	/* user defined device functions
+		may be added to these unions */
+
+	// hmm.. i think we should provide more space for
+        // functions pointers	
+
+	BYTE (* putc) (char c);
+	DWORD (* readblock) (BYTE * buffer, WORD nbytes);
+
+	char (* getc) ();
+	DWORD (* writeblock) (BYTE * buffer, WORD nbytes);
+
+
+	DWORD (* init) ();
+	DWORD (* exit) ();
+
+} DEVINFO;
+
+typedef struct __FILEINFO {
+
+        char filename [c_MAXPATHLENGTH];
+	DWORD size;
+        DWORD offset;
+
+        MNTINFO * mountinfo;
+	void * pfsstruct;
+
+} FILEINFO;
+
+typedef struct __MEMBINFO {
+
+	BYTE	pid;
+	MEMVAR	size;
+
+} MEMBINFO;
+
+typedef struct __MNTINFO {
+
+	char targetpath [c_MAXPATHLENGTH];
+	char sourcepath [c_MAXPATHLENGTH];
+	DEVINFO * device;
+	int fstype;
+
+} MNTINFO;
+
+typedef struct __PROCINFO {
+
+	BYTE pid;
+	BYTE ppid;
+	BYTE priority; // 1...9 = factor for currentttl
+	BYTE lasterror;
+	SIGNALPROC signals [5];
+
+} PROCINFO;
+
+typedef struct __TASKINFO {
+
+	TASKENV taskenv;
+	void * heap;
+	BYTE tid;
+	PROCINFO * owner; // to access data in the owner's proc struct
+
+} TASKINFO;
+
+typedef struct __TIMEINFO {
+
+	BYTE	hours;
+	BYTE	minutes;
+	BYTE	seconds;
+
+} TIMEINFO;
+
+#endif

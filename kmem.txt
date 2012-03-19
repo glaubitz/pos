@@ -1,0 +1,13 @@
+KERNEL MEMORY
+
+data-word/struct	size * no. instances
+--------------------------------------------
+DEVINFO:		17 * 2 = 34
+FILEINFO:		28
+PROCINFO:		14 * 10 = 140
+TASKINFO (TASKENV: 8):	13 * 20 = 260
+MOUNTINFO:		7 * 2 = 14
+
+~ MEMORY USAGE OF __kernel STRUCT: 465 BYTES
+
++ APPROXIMATELY 5-10 kBytes for Kernel Code, ~ 40-50k free

@@ -1,0 +1,155 @@
+====================================================
+			pOS
+                TODO List - 08/30/2002
+====================================================
+
+! See also the todo.txt files in the source-subfolders. !
+! See notes.txt for IMPORTANT notes on the kernel.      !
+! See devices.txt for IMPORTANT notes on devices.       !
+
+0. Develop a generic driver interface for the kernel.
+   All IO can only then be implemented.
+   Also develop a generic FS interface.
+   -> With the DEVINFO struct we provide a simple
+   interface for I/O that still needs to be extended.
+
+1. Read entire LIB.EXE documentation in MSDN Library
+   to learn how to create static libraries (*.LIB).
+   Needed to write working pos export library.
+   I think .DEF (module definition file) files are
+   the solution.-> we now got the map2inc tool that
+   generates a kernel symbol header file during
+   kernel compilation from the linker-generated
+   map-file
+
+2. Check all compiler-generated code for re-entrability !
+   (the code uses zeropage !!)
+
+3. Answer questions in /document/questions.txt.
+
+4. Learn more about interrupt timings by reading
+   C64 hardware document. How many instructions
+   are executed inbetween every IRQ ?
+
+5. Get informed about delay functions and their
+   calibration.
+
+6. Add support to hook also NMI and other system
+   events (shutdown etc).
+
+7. Add idle thread to consum all unused CPU time.
+   (PID 0) (see also point 23 beneath).
+
+8. Add multi-threading.->implemented
+
+9. Get informed about Atoms and their use, implement
+   this technique.->Atoms are global kernel variables.
+
+10. Write __remalloc (void *, WORD size) function.
+    This is going to be head-cracking, if it ain't
+    going to work, we make all kernel data static
+    and waive for the remalloc. The kernel then
+    lies in a predefined static memory block, the
+    kernel memory.
+-> We have now a usable remalloc functions but
+   the kernel should have nevertheless its own
+   reserved area in memory whose size is determined
+   on compile time.
+
+11. When the kernel finally works, put comments every-
+    where where needed to improve readabilty and to
+    paste some jokes ;).
+
+12. Add volatile data protection mechanism. This mechanism
+    would then write all memory dynamically allocated by a
+    process to disk when the process has to be killed due
+    to no responding to kernel end-process signals.
+
+13. Add file protection for my own file system. This mechanism
+    writes changed files new free space on the disk and just
+    alters the directory entry of the file. The file will
+    still be recoverable after a save as its data is not
+    overwritten. The area of the old file will be marked
+    as free and will only overwritten when there is no
+    more disk free space available.
+
+14. Integrate a clock in the shell "sh" running in an
+    extra task. For this we need a sleep(MILSECS) function.
+    Also we need more information about the IDLE process.
+
+15. Write a C-program using the stdlib called "map2inc" that
+    will generate a kernel file with all symbols as macro
+    definitions from the map-file.
+    -> done
+
+16. Rewrite the hook code, hooking *every* interrupt would
+    be stupid as it would slow down execution speed of any
+    tasks dramatically. Replace this instead with a support
+    for UNIX-like signals.
+
+17. The Relocate code needs to be written.
+
+18. Develop a simple executable file format and port ld65
+    to this.
+
+19. Analyze the c64 standard memory layout accurately and
+    concatenate as much as possible free memory to one
+    block (e.g. by moving the screen-text memory from
+    $400 to the end of free memory, just adjust 64con.s).
+
+20. Sleep-signal for tasks:
+    tasks are put into sleep-mode if they call a kernel-
+    function that wait for any event to happen, e.g.
+    a key is depressed on the keyboard
+
+21. delay-loop:
+    there are two possibilities to integrate the CPU-data
+    for the delay loop:
+    a) the CPU specific data is compiled into kernel and
+       determined in kernel configuration before compilation,
+       on booting, the CPU clock speed will need to be entered
+    b) the CPU clock speed is compiled into kernel as the CPU
+       specific data is
+
+22. CC65 and zeropage:
+    cc65 uses zeropage for some code; when a pOS-app has been
+    compiled with cc65, during a task-switch these zp-data
+    will be overwritten by another task, remedies are:
+    a) modify cc65 to avoid using zeropage but call some
+       kernel routines
+    b) save zeropage before task-switch in TASKENV-struct (easier)
+
+23. tasks loop:
+    the number of jiffies for one run through the loop is calculated
+    depending on the number of ACTIVE (!) tasks
+
+24. Write the configuration tool "config" in /TOOLS. This should be
+    done after a WORKING kernel has been released so that it doesn't
+    need to be adjusted permanently to the peridic kernel changes
+    during development.
+
+25. read CIA programmers guide
+
+26. ask Lunix guy from comp.sys.cbm how delay works
+
+27. get a list with all ESCAPE codes and a ESCAPE code
+    definition (HOW IT SHOULD WORK)
+28. why does Lunix interpret ESCAPE codes after "sh" has been
+    started but "init" does interpret these codes, i thought
+    that the escape codes are interpreted by "console.s" that is
+    internal to the kernal (same goes for Linux)
+
+29. replace putc and getc with putstring and getstring respectively
+
+30. remove preceding "__" from all kernel symbols
+    introduce new system for all global symbols:
+    prefix              meaning
+    j_                  jump table symbol (i.e. a function pointer)
+    k_                  kernel symbol (e.g. a function)
+    c_                  constant/defined value (e.g. a message)
+    m_                  macro (assembler or C or else) (i.e. inline code)
+    d_                  driver code symbol (i.e. all global symbols of a driver)
+
+31. getlasterror, setlasterror shall become task-related not
+    process-related (as it is now)
+

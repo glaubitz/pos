@@ -1,0 +1,57 @@
+/*
+* pOS
+* 1541fs.c
+* jan., 29 2001
+*/
+
+/*
+
+  this implementation will be quite simple,
+  as these routines will access files on
+  the disk using standard 1541 command
+  strings,
+  the strings will be put onto the iec
+  bus, where the 1541 will read them.
+  but we need to understand the commodore
+  kernel function "open, close, print#,
+  get#"
+
+*/
+
+#include <kernel.h>
+
+
+DWORD	getfilelength (HFILE){
+
+	return 0;
+}
+
+DWORD	readfile (HFILE file, BYTE buffer []) {
+
+	return 0;
+}
+
+DWORD	writefile (HFILE file, BYTE buffer []) {
+
+	return 0;
+}
+
+BOOL	deletefile (HFILE file) {
+
+	return FALSE;
+}
+
+BOOL	renamefile (HFILE file, char * newname) {
+
+	return FALSE;
+}
+
+HFILE	createfile (BYTE drive, char * filename,
+					WORD ATTRIBUTES) {
+
+	return (HFILE) 0;
+}
+
+}
+
+BOOL	initdisk (BYTE drive);

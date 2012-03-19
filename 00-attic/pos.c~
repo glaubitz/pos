@@ -1,0 +1,50 @@
+/*
+*  pOS
+*  pos.c - pOS static libary
+*  03/27/02
+*/
+                                                               
+#include <pos.h>
+
+/* ksyms.h is generated during kernel compilation by map2inc */
+#include <ksyms.h>
+
+/* memory functions */
+
+void * (* malloc) (MEMVAR size) = SYM__MALLOC;
+BOOL (* memset) (void * object, MEMVAR size, BYTE value) = SYM__MEMSET;
+
+BOOL    __free (void * object) = SYM__FREE;
+
+/* file system functions */
+
+FILEINFO * (* createfile) (BYTE drive, char * filename, WORD attributes) = SYM__CREATEFILE;
+DWORD (* readfile) (HFILE file, void * buffer, DWORD bytes) = SYM__READFILE;
+DWORD (* writefile) (HFILE file, void * buffer, DWORD bytes) = SYM__WRITEFILE;
+DWORD (* getfilelength) (HFILE file) = SYM_GETFILELENGTH;
+BOOL (* renamefile) (HFILE file, char * newname) = SYM__RENAMEFILE;
+BOOL (* deletefile) (HFILE file) = SYM__DELETEFILE;
+BOOL (* initdisk) (BYTE drive) = SYM__INITDISK;
+
+/* printk */
+
+void (* printk) (char c) = SYM__PRINTK;
+
+/* readk */
+
+/*
+#ifdef __16BITMEM
+void (* readk) (void * buffer, WORD size) = __readk;
+#else
+#ifdef __32BITMEM
+void (* readk) (void * buffer, DWORD size) = __readk;
+#endif
+#endif
+*/
+
+char (* readk) () = SYM__READK;
+
+/* hooks */
+
+HHOOK (* registerhook) ((void *) hookproc) = SYM__REGISTERHOOK;
+BOOL (* unregisterhook) (HHOOK hHook) = SYM__UNREGISTERHOOK;

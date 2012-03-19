@@ -1,0 +1,53 @@
+/*
+ * pOS
+ * time.c - time functions
+ * 10/19/03
+ */
+
+
+#include <kernel.h>
+
+
+s_time * k_gettime (s_time * time) {
+
+
+	return -1;
+}
+
+int k_settime (s_time * newtime) {
+
+	return 0;
+}
+
+static void msecs_to_time (unsigned long msecs, s_time * time) {
+
+	/* well, i think i need to sleep a night over that */
+	
+	if (msecs < 31536000000) {
+	
+		time->years = 0;
+
+		if (msecs < 2678400000)
+			time->months = 1;
+
+		if (msecs < 5097600000)
+			time->months = 2;
+
+		if (msecs < 7776000000)
+			time->months = 3;
+
+		if (msecs < 10368000000)
+			time->months = 4;
+
+		/* ... */
+
+		if (msecs < 31536000000)
+			time->months = 12;
+
+		time->days = (t / 86400000) + 1;
+		time->hours 
+
+	}
+	else
+		time->years = msecs / 31536000000;
+}

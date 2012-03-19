@@ -1,0 +1,11 @@
+/*
+* pOS
+* relocate.s
+* 03/27/02
+*/
+
+.export __c64relocate
+
+__c64relocate
+
+        rts

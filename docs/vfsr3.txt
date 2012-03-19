@@ -1,0 +1,86 @@
+Virtual Filesystem R3 - 07/21/03 (the final approach - hopefully :) )
+
+Remark as of 05/08/05:
+
+The VFS-design has been extended by a virtual device filesystem
+which allows to waive the need for special device-files
+to exist physically. Read devfs.txt for more on this.
+Due to this design change, the loop filesystem support
+is implemented automagically, as both devices and files
+have the same i/o-interface. Any filesystem-driver can
+provide special features for filesystems mounted
+via loopback, e.g. in case the image-files have a certain
+flag, thus the filesystem-driver should be made aware
+that it is acting on an image-file instead a device-file.
+
+This filesystem is inspried by the virtual filesystem
+used by Linux. It has one root directory where all other
+filesystems, devices (as device files) and files are
+accessed from.
+
+To access files of a filesystem, the filesystem needs to be
+mounted to the VFS-tree. This is accomplished with the
+mount-command which calls the VFS-function "mount". When
+mounting a filesystem to the VFS-tree the mount-function
+needs four parameters: the filesystem source file (usually
+a device file, but can be a filesystem-imagefile, too),
+the mount-point (the directory in the VFS-tree where the
+new filesystem shall be accessed from), the filesystem-type
+and the mount-options (rw-mode, loop, access-rights etc).
+
+There are (currently) two types of filesystem-sources that can be
+mounted to the VFS-tree:
+
+1. a device-source
+
+   This filesystem-source is a device represented by it«s
+   device-file (usually found in the /dev-directory). tionThe
+   mount-function opens the requested device-file and reads
+   the actual device id from this file (device numbers).
+
+2. a filesystem-imagefile
+
+   An imagefile is an exact binary copy of a disk partition
+   including the filesystem data. Thus an imagefile that
+   is stored on any filesystem of the VFS-tree can be
+   mounted into the direcotry tree.
+
+The mount-function
+
+1. open filesystem-sourcefile
+2. read first XY bytes and check for special file type (device, pipe etc)
+3. if it«s special open the device or pipe and store the struct
+4. if it«s no special it must be an image file, check the image«s integrity then
+5. store appropriate struct into mountlist (s_device, s_pipe or s_file *)
+6. close the file
+
+* this is very useful when keeping the image-file always open until it gets unmounted
+
+The open-function
+
+1. open filesystem-sourcefile
+2. read first XY bytes and check for special file type (device, pipe etc)
+3. if it«s special open the device or pipe and store the struct
+4. if it«s no special it must be a convential file on a filesystem, redirect
+   the request with the device-struct from the mountlist to the appropriate
+   filesystem-driver
+5. store the appropriate struct in the s_file-struct and return it
+
+Typical device file/pipe file
+
+   In a device/pipe file we store a simple struct as binary (subject to
+   change)
+
+   struct s_specialfile {
+   	
+	char [10] classname;
+	union {
+		unsigned char devmajor;
+		unsigned char pid;
+        }
+	union {
+		unsigned char devminor;
+		unsigned char pid2;
+	}
+   }
+

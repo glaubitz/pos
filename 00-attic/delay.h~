@@ -1,0 +1,12 @@
+/*
+* pOS
+* delay.h - header for the delay loop
+* 08/30/02
+*/
+
+#define m_delay50us \
+\
+        __asm__ { \
+        	;; do the delayin' here \
+\
+        } \

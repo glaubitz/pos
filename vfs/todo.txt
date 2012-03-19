@@ -1,0 +1,46 @@
+Filesystem TODO - 12/04/03
+
+1. When to convert from dentry to device/file,
+   in fs.c or in filesystem driver ??
+
+   Probably have function in fs.c/dcache.c/mount.c
+   that is called by fs-driver.
+
+2. I think we can waive for get_mount, can't we ?
+
+3. (1 + 2): Probably replace get_mount with
+   dentry_to_fs, which converts dentry
+   into two parts: device/file-struct and absolute
+   path on filesystem. But any dentry already
+   contains a struct which represents the dentry
+   on the filesystem so only need to convert
+   into dentry/file.
+
+4. Implement file-modes (r, w, rw, shared etc).
+
+5. Implement 1541-filesystem-driver:
+   - static unsigned char lastfreech;
+   - static unsigned char highestch;
+   - static int 1541_send (ch, buffer, size)
+   - static int 1541_recv (ch, buffer, size)
+
+6. All fs-drivers should probably have open
+   and close functions: the 1541fs driver
+   needs to know the open channel to r/w
+   from or we would need to open it everytime
+   for r/w, but we would then always need
+   to seek to current file-position.
+   Update: Hard to say, a normal fs-driver
+   addresses blocks on disk directly, so
+   we probably don't need that struct
+   as the fs-driver only always transforms
+   file-i/o into block-i/o. Really difficult !
+
+7. Implement pipe-fs-driver, no concept
+   though ! Maybe pipe-fs would be
+   mounted onto a virtual-dir (as
+   1541fs does not support dirs) or
+   we waive for pipes in 0.0.1.
+
+8. dcache lacks:
+   - setting of dentry properties (filename, attr)

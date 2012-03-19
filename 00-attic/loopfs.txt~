@@ -1,0 +1,9 @@
+The Loop Filesystem
+-------------------
+05/07/05
+
+The loop filesystem (the proper name being
+loopback filesystem actually) provides functionality
+for mounting filesystem from image files. It actually
+only serves for proper redirecting of filesystem operation
+thus the actual sourcecode is very small.

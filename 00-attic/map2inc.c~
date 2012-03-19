@@ -1,0 +1,158 @@
+/*
+*
+* pOS - portable Operating System
+* map2inc.c - create a symbol include file from a map file
+* 03/06/02
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_LINE_WIDTH 64
+
+#define __16BITMEM
+
+#ifdef __16BITMEM
+#define ADDRESS_WIDTH 4
+#endif
+
+#ifdef __32BITMEM
+#define ADDRESS_WIDTH 8
+#endif
+
+#ifndef ADDRESS_WIDTH
+#error Width of hex-addresses not defined
+#endif
+
+
+void die (char * str) {
+
+	printf ("%s %c", str, '\n');
+
+	fcloseall ();
+
+	exit (-1);
+
+}
+
+void usage () {
+
+	die ("Usage: map2inc map-file [include-file]");
+
+}
+
+void makedef (char * source, char * target) {
+
+	char address [ADDRESS_WIDTH + 1];
+	char * symbol;
+	int strcount;
+
+	strupr (symbol); // pos.c expects uppercase symbols
+
+	address [0] = '\0';
+
+	strncat (address, source, ADDRESS_WIDTH);
+
+	strcount = 1;
+
+	strcat (target, "#define ");
+
+	while (1) {
+
+		if (* source == ' ') {
+
+			while (* source == ' ')
+				source++;
+
+			strcount++;
+
+			if (strcount == 3) {
+				symbol = source;
+				break;
+			}
+		}
+
+		source++;
+	}
+
+        strcat (target, "SYM");
+
+	strcat (target, symbol);
+
+	strcat (target, " 0x");
+
+	strncat (target, address, ADDRESS_WIDTH);
+
+}
+
+int main (int argc, char ** argv) {
+
+	FILE * ifile, * ofile;
+
+	char lineread [MAX_LINE_WIDTH];
+	char linewrite [MAX_LINE_WIDTH];
+
+	char c;
+
+	int i;
+
+
+	if (argc < 2)
+                usage ();
+
+        if (!(ifile = fopen (argv [1], "r")))
+                die ("Error opening map-file.");
+
+	if (argc == 3) {
+
+		if (strcmp (argv [1], argv [2]) == 0)
+			die ("Input map-file and output include-file cannot have the same filename");
+		
+		if (!(ofile = fopen (argv [2], "w")))
+			die ("Error while creating include-file.");
+	}
+
+	else
+
+		if (!(ofile = fopen ("symbols.h", "w")))
+			die ("Error while creating include-file.");
+
+        fwrite ("/* Automatically generated symbols by map2inc */\n", 1,
+                strlen ("/* Automatically generated symbols by map2inc */\n"), ofile);
+
+	while (!feof (ifile)) {
+	
+		i = 0;
+
+		lineread [0] = '\0';
+		linewrite [0] = '\0';
+	
+		while (1) {
+		
+			c = fgetc (ifile);
+
+			if (feof (ifile) || c == 0 || c == '\n')
+				break;
+			
+			lineread [i] = c;
+			i++;
+
+			if (i == MAX_LINE_WIDTH)
+				die ("Input line longer than buffer, can't continue. Increase buffer in man2inc.c.");
+		}
+
+		lineread [i] = '\0';
+
+		makedef (lineread, linewrite);
+
+		fwrite (linewrite, 1, strlen (linewrite), ofile);
+		
+                fputc ('\n', ofile);
+	}
+
+	fcloseall ();
+
+	return 0;
+
+}

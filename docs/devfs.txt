@@ -1,0 +1,64 @@
+Device Filesystem in pOS
+------------------------
+05/08/05
+
+The current design of the virtual filesystem in
+pOS represents devices as real files on the
+root-filesystem. On each filesystem access
+(e.g open), the VFS-layer first reads the files
+into buffer and tries to gather information on devices
+represented by this file. It does this in any case even
+in case it's opening a normal file only. This technique
+has two major disadvantges:
+
+- the device-file recognition is very unsure and unsafe,
+  e.g anyone could write a file containing any devices
+  numbers and thus create device nodes; and sometimes
+  a file could, even though this is very unlikely, contain
+  random data that could be misinterpreted as device
+  reference-numbers and therefore write data accidentally
+  to any device
+
+- as the whole process takes place on any filesystem access
+  it produces some unwanted overhead
+
+To solve these issues, devfs is introduced as a memory-resident
+virtual filesystem which creates virtual device nodes.
+This idea isn't actually new, as it was already aimed in
+previous concepts for VFS but there wasn't a satisfactory
+comprehensive design concept for VFS and during development
+of the VFS design, devfs was temporarily dropped. The
+major requirement for devfs, the directory cache, dcache
+is now fully featured in VFS. Thus devfs can completely
+reside in memory.
+
+Due to the mature design of the current VFS-concept the
+devfs-implementation is very easy. It has the following
+main features:
+
+- devfs is a convential filesystem driver which exports
+  all typical functions provided by any other filesystem
+  driver and thus cannot be recognized as a special
+  filesystem except that it has no mount source
+- all file-type recognition in the mount/open procedures
+  will be dropped as vfs now only needs to determine
+  the fs-driver and pass the operation requested by
+  the user-space program to it
+- devfs is mounted during k_mount_init () and cannot
+  be unmounted; in order for its directory entries
+  to have proper data (especially the parent-node
+  of every dentry "/" needs to be known for proper
+  dcache-operation) the root-filesystem still
+  needs to be mounted prior to any other filesystem
+- all devices to be used are defined in hash-table
+  in source code that could like this
+
+  #define fd0	{{1,0},"fd0"}
+  #define fd1	{{1,1},"fd1"}
+  #define ser0	{{2,0},"ser0"}
+
+  on devfs initialization the virtual
+  devices are created in dcache based
+  on this information; for this reason
+  devfs has its own struct in the union
+  section of s_dentry called s_devfs_dentry

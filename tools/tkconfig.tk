@@ -1,0 +1,95 @@
+#!/usr/bin/wish -f
+
+# pOS
+# tkconfig.tk - tk kernel configuration
+# 02/27/03
+
+proc p_readconfig {} {
+
+# nothing yet
+
+}
+
+proc p_saveconfig {} {
+
+}
+
+# main
+
+# nothing
+
+# layouts
+
+frame .main
+
+	label .main.desc	-text "pOS Kernel Configuration for tk"
+	button .main.saveexit	-text "Save changes and exit" -command "set v_exit saveexit" -width 25
+	button .main.looseexit	-text "Loose changes and exit" -command "set v_exit looseexit" -width 25
+
+frame .config
+
+frame .arch -relief ridge -borderwidth 1
+
+	label .arch.desc	-text "Architecture"
+
+	radiobutton .arch.c64	-text "Commodore C64 (8bit)" -variable v_arch -value c64
+	radiobutton .arch.x86	-text "Intel 80x86 (16bit)" -variable v_arch -value x86
+
+	# default value
+	set v_arch x86
+
+	pack .arch .arch.desc .arch.c64 .arch.x86 -anchor w
+
+# end frame .arch
+
+frame .drv -relief ridge -borderwidth 1
+
+	label .drv.desc	-text "Drivers"
+
+	label .drv.char		-text "Character Devices"
+	checkbutton .drv.c64con	-text "C64 console support (40 line)" -variable v_c64con
+	checkbutton .drv.x86con	-text "Intel 80x86 console support (80 line)" -variable v_x86con
+	label .drv.block	-text "Block Devices"
+	checkbutton .drv.c64disk	-text "C64 floppy disk support" -variable v_c64disk
+	checkbutton .drv.x86disk	-text "Intel 80x86 floppy disk support" -variable v_x86disk
+
+	# default values
+	set v_x86con 1
+	set v_x86disk 1
+
+	pack .drv .drv.desc .drv.char .drv.c64con .drv.x86con \
+		.drv.block .drv.c64disk .drv.x86disk -anchor w
+
+# end frame .drv
+
+frame .fs -relief ridge -borderwidth 1
+
+	label .fs.desc		-text "Filesystem Support"
+
+	checkbutton .fs.pfs	-text "portable Filesystem (pFS)" -variable v_pfs
+	checkbutton .fs.pfsofr	-text "pFS Overwritten File Recovery Support" -variable v_pfsofr
+	checkbutton .fs.1541fs	-text "Commodore 1541 Filesystem" -variable v_1541fs
+
+	# default value
+	set v_pfs 1
+
+	pack .fs .fs.desc .fs.pfs .fs.pfsofr .fs.1541fs -anchor w
+
+# end frame .fs
+
+frame .other -relief ridge -borderwidth 1
+
+	label .other.desc	-text "Other Options"
+
+	checkbutton .other.vmp	-text "Volatile Memory Protection Support" -variable v_vmp
+	checkbutton .other.verbose	-text "Kernel Verbose Mode" -variable v_verbose
+
+	pack .other .other.desc .other.vmp .other.verbose -anchor w
+
+#end frame .other
+
+# comprehend frame layout
+
+pack .arch .drv .fs .other -in .config -fill x
+pack .main .main.desc -pady 2m
+pack .config .main.saveexit .main.looseexit -in .main

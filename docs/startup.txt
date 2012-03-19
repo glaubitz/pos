@@ -1,0 +1,38 @@
+The kernel startup in kernel v0.0.1
+05/17/01
+
+Depending on the type of machine you are using
+something may differ but the bulk startup
+looks like this:
+
+At first the computer loads the bootloader whose
+code is assembled from the source of
+
+/ARCH/<MACHINE>/BOOT.S
+
+This is done on a C64 by typing
+
+LOAD"BOOT",8<RETURN>
+RUN<RETURN>
+
+at the BASIC prompt.
+
+this code loads the main kernel image into memory
+and jumps to the kernel entry code that is
+assembled from
+
+/ARCH/<MACHINE>/ENTRY.S
+
+this code sets-up interrupt and reset vectors
+and other things necessary (i.e disabling of ROM-code),
+then calls a routine called start_kernel ()
+from /KERNEL/SYSINIT.C.
+
+This routine sets up the rest kernel paramters
+and then loads the program init from
+
+/KERNEL/INIT/INIT.C
+
+This small program will load the files "init.tab"
+and "rc.config" which contain programs to load
+and custom settings for the kernel (i.e font color).

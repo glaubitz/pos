@@ -1,0 +1,23 @@
+/*
+* pOS
+* printk.c
+* jul., 18 2001
+*/
+
+#include <kernel.h>
+
+void __printk (char c) {
+
+	DEVINFO * console;
+
+	console = getdevice ("console");
+
+	if (!console)
+		return;
+
+	console->__putc (c);
+
+	__freedevice (console);
+}
+
+

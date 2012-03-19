@@ -1,0 +1,36 @@
+/*
+* pOS
+* handler.c
+* 03/26/02
+*/
+
+#include <kernel.h>
+
+/* PRELIMENARY */
+
+WORD __addhandler (HANDLERPROC * handlerproc, BYTE idevent) {
+
+        if (!handlerproc) {
+                __setlasterror (__MSG_ILLEGAL_PARAMETER);
+                return __MAX_NHANDLER;
+        }
+
+        switch (idevent) {
+
+        case __EVENT_CLKALARM:
+        case __EVENT_TIMERIRQ:
+        case __EVENT_SIGNAL:
+
+        default:
+                __setlasterror (__MSG_ILLEGAL_PARAMETER);
+                return __MAX_NHANDLER;
+        }
+}
+
+BOOL __removehandler (HANDLERPROC * handlerproc, BYTE idevent) {
+
+        if (!handlerproc) {
+                __setlasterror (__MSG_ILLEGAL_PARAMETER);
+                return __MAX_NHANDLER;
+        }
+}

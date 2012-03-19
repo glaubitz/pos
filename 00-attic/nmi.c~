@@ -1,0 +1,12 @@
+/*
+* pOS
+* nmi.c
+* jan., 26 2001
+*/
+
+#include <kernel.h>
+
+void __nmi () {
+
+
+}

@@ -1,0 +1,171 @@
+/*
+* Configuration File Library
+* (c) Adrian Glaubitz - adi007@germanynet.de
+* jun., 26 2001
+* cfgfile.c - function defitions
+*/
+
+#include <lib/cfgfile.h>
+
+#define CHAR_COMMENT ';'
+#define CHAR_NEWLINE '\n'
+#define CHAR_ASSIGN '='
+#define CHAR_IGNORE ' '
+
+/* IMPORTANT: remember to copy a single char to a two-byte
+	buffer before calling a string-function with a pointer
+	to the character, character needs to be null-terminated,
+	this needs to be done before any character is added
+	to a string with concat () !!
+*/
+
+/* The following structs are defined in cfgfile.h */
+
+/*
+typedef struct _CFGFILE {
+
+        HANDLE ConfigFile;
+        CFGSECTION * ConfigSections;
+
+} * LPCFGFILE;
+
+typedef struct _CFGSECTION {
+
+        LPCSTR Name;
+        CFGENTRY * ConfigEntries;
+
+} * LPCFGSECTION;
+
+typedef struct _CFGENTRY {
+
+        LPCSTR Name;
+        LPCSTR Value;
+
+} * LPCFGENTRY;
+
+*/
+
+void WriteConfigFile (LPCFGFILE lpCfgFile) {
+
+}
+
+void SetEntry (LPCSTR SectionName, LPCSTR Name, LPCSTR Value) {
+        /* if entry does not exist, it will be created automatically */
+}
+
+void AddSection (LPCFGFILE lpConfigFile, LPCSTR Name) {
+
+        LPCFGSECTION lpConfigSection;
+
+        if (lpConfigFile->lpConfigSection == NULL)
+                lpConfigFile->lpConfigSection =
+                        malloc (sizeof (LPCFGSECTION));
+        else {
+                
+				// we should check for sufficent memory on this call
+				if (!lpConfigSection = malloc (sizeof (lpConfigFile->lpConfigSection)) +
+					sizeof (LPCFGSECTION))) {
+					if (getlasterror () == __MSG_OUT_OF_MEM)
+						printf ("Out Of Memory");
+					return;
+				}
+							
+
+                for (i = 0; i < sizeof (lpConfigFile->lpConfigSection) /
+                        sizeof (LPCFGSECTION); i++) {
+
+                        // copy content of lpConfigFile->lpConfigSection
+                        // to lpConfigSection
+                }
+        }
+}
+
+void RemoveEntry (LPCFGFILE lpConfigFile, LPCSTR SectionName, LPCSTR Name) {
+
+}
+
+void RemoveSection (LPCFGFILE lpConfigFile, LPCSTR Name) {
+
+}
+
+LPCFGFILE ReadConfigFile (FILEINFO * File, LPCFGFILE lpConfigFile) {
+
+		DWORD FileSize;
+		WORD i;
+		char tmpString [64], c [2];
+		LPCSTR CurrentSection, CurrentEntry;
+		char * TextBuffer;
+
+		FileSize = getfilesize (File);
+
+		c [1] = '\0';
+
+		if (!TextBuffer = malloc (FileSize)) {
+			
+			if (getlasterror () == __MSG_OUT_OF_MEM)
+				printf ("Out Of Memory");
+			
+			return;
+		}
+
+        // ReadFile (...)
+
+        for (i = 0; i < FileSize; i++) {
+
+                if (TextBuffer [i] == '[') {
+
+                       tmpString [0] = '\0'; /* empty buffer from previous use */
+
+                       while (TextBuffer [i] != ']' && TextBuffer [i] != CHAR_NEWLINE
+                                && i < FileSize) {
+
+						   if (TextBuffer [i] != CHAR_IGNORE) {
+
+								c [0] = TextBuffer [i];	
+								tmpString = concat (tmpString, c);
+						   }
+
+							i++;
+					   }
+
+                       AddSection (lpConfigFile, tmpString);
+                       tmpString [0] = '\0';
+
+                       while (TextBuffer [i] != CHAR_ASSIGN && TextBuffer [i] != CHAR_NEWLINE
+                                && i < FileSize) {
+						   
+						   if (TextBuffer [i] != CHAR_IGNORE) {
+                                        
+									c [0] = TextBuffer [i];	
+									tmpString = concat (tmpString, c);
+						   }
+						   
+						   i++;
+					   }
+
+                       CurrentEntry = tmpString;
+                       tmpString [0] = '\0';
+
+                       while (TextBuffer [i] != CHAR_ASSIGN && TextBuffer [i] != CHAR_NEWLINE
+                                && i < FileSize) {
+
+						   if (TextBuffer [i] != CHAR_IGNORE) {
+
+							   c [0] = TextBuffer [i];
+							   tmpString = concat (tmpString, TextBuffer [i]);
+						   }
+						   
+						   i++;
+                       }
+
+                       SetEntry (lpConfigFile, CurrentSection, CurrentEntry, tmpString);
+                }
+        }
+
+        return lpConfigFile;
+}
+
+LPCSTR ReadEntry (LPCFGFILE lpConfigFile, LPCSTR SectionName, LPCSTR Name) {
+
+
+}

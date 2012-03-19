@@ -1,0 +1,17 @@
+NOTES on devices
+jan., 28 2002
+-------------
+
+The kernel should always be requested by devices with
+events and should not query all devices regularily
+for new information. If a certain device does not support
+this kind of i/o, then the device driver must contain
+a IRQ-routine to query the device and to enable/disable
+querying. This way the kernel will be confronted with
+a feign support of device-events and the kernel-device
+interface will be kept simple.
+
+BTW: how about integrating a IRQ-routine into every driver
+that can be registered ?? (but problem would be: kernel
+will slow down by executing a big bunch of routines, NO
+better NOT)

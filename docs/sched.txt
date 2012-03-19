@@ -1,0 +1,368 @@
+Scheduler design notes - pOS v0.0.1 - 06/15/05
+-----------------------------------------------------------
+(if you think this information is a mess then you're right)
+
+corresponding Linux (2.4.20) source:
+
+include/asm-i386/system.h
+arch/i386/kernel/process.c
+kernel/sched.c
+
+also check out the schedule () of Linux 0.0.1:
+
+Rough description of the Linux task scheduler:
+
+The tasks are not executed in a special order but
+the scheduler always looks for the next task
+to be run by it's "weight" which is defined by
+the tasks priority, remaining cpu-time and
+the tasks policy (don't know right now what this
+means, but it seems that this determines how
+the task would yield the CPU to other tasks).
+The tasks' counter are reset when they *all* have
+reached 0. When scheduling, the scheduler will
+first determine the idle-task to be executed next,
+if it cannot find no other task that wants to
+run (no RUNNING-flag) the idle-task is executed.
+
+Now, I think the unsorted way the tasks are chosen
+for execution is the reason why one task can
+consum as much as 90% of CPU-time: all other
+tasks are sleeping and the only one executing
+is running until it's counter reaches 0, then
+the counter is reset and the task is rescheduled
+(the idle-task is hardly chosen as it has the
+lowest (!) priority).
+
+The schedule () *always* performs a taskswitch
+(at least if it's not switching the idle-task
+and no other task is RUNNING). The do_timer ()
+is called within every timer-IRQ and decreases
+it's counter (at least in 0.0.1, could not
+find the technique used in 2.4.20), if it
+reaches 0, it calls schedule ().
+
+It's the schedulers task in an operating system
+kernel to distribute CPU-time (the average
+amount of instructions per second) to the
+tasks and suspend tasks temporarily if they
+are waiting for an event to happen.
+
+First we consider what kinds of tasks can occur 
+to the scheduler: (examples)
+
+  -> task1: calculate 100!
+  -> task2: print "test" in a loop
+  -> task3: copy files from to
+  -> task4: wait for user input
+  -> task5: print a text and quit
+  -> task6: monitor a device
+  -> ...
+  -> taskn: ...
+
+--> it seems (!, not 100% sure) that there are roughly two categories
+    of tasks:
+	a. tasks that do not call any system-routines but are
+           still busy with some calculations
+	b. tasks that call system-routines and can only resume
+	   executing after the system-routine returned
+-----------------------------------------------------------------------------
+       (c).but there are also tasks that need to be running
+	   continuesly but do only need a limited amount of instructions
+	   per second (e.g. playing an MP3-file on a
+	   machine requires only as much CPU-time to
+	   decode one second of music in at worst one second
+	   of CPU-execution; a fast machine decodes
+	   1 second of MP3-data in much less than 1 second,
+	   so there's alot of the 1 second of CPU-time left
+	   for other tasks)
+-----------------------------------------------------------------------------
+	--> it seems (!, not 100% sure) that the only way to send
+	    a task sleeping is when it has called a certain routine
+	    that can currently not continue as it is waiting for
+	    a certain event
+	--> another probable way that comes to my mind is that the
+	    scheduler could send a sleep-signal regularily to all
+	    running tasks in order to get them to sleep; NO,
+	    that would make the whole stuff too slow, tasks
+	    should request (over kernel routines etc) the
+	    sleeping themselves
+	--> probably the main task of the scheduler is to steal
+	    as much as CPU-time for the IDLE-task, but the question
+	    here is, how do we know, how much time a certain task
+	    needs, it is very desirable for a task, which let's
+	    say is to calculate the result of x!, to get as much
+	    as CPU-time as possible (take a look at the faculty ()
+	    function of the standard C-library if there's some
+	    call to request maximum CPU-time)
+
+tests for the Linux scheduler:
+
+1. write a C-code:
+	int main () {
+		loop:
+			printf ("this is a test !");
+			// also check without printk-call
+			goto loop;
+		return 0;
+	}
+	
+	how busy does the CPU get ? not busy, 2% only
+	expected: gets very busy ! no, it does not !
+	assumption: it does not so busy as printf
+	does not update the screen that often that
+	a 350 MHz CPU would become really busy
+	-> this code is not proper to test the
+	scheduler
+
+2. check the code of faculty () in the libc for a call
+   to request extra CPU-time from the scheduler
+   expected: there's no such function
+   result: i could not find the respective function
+   in my C-library (i must be blind !), but see
+   point 3 !!
+
+3. write a C-code:
+	int main () {
+
+		unsigned long x; // need to choose long double here
+		unsigned short i; // "         "          "       "
+		
+		x = 1;
+
+		for (i = 1; i <= 100; i++) // 100000000 will make a P2-350 busy !
+			x= x * i;
+		return 0;
+	}
+
+	how busy does the CPU get ?
+	expected: gets very busy !
+	result: it doesn't get too busy
+	unless you use values for "i"
+	which are large enough; a value
+	around 10^8 (!) will make my 350 MHz
+	CPU busy for a while (~90% busy)
+	conclusion: the scheduler only sets
+	tasks to sleep which request to !
+	-> all kernel, library code should
+	contain appropriate calls to a kernel
+	function in the scheduler (e.g. request_sleep)
+
+--> in case we are right and the theory of the two types
+    of tasks is correct, what would that mean then ?
+    probably, that most kernel user functions should
+    always request a sleep for the current task if
+    there's no chance of resuming for the moment; the
+    following questions arise then:
+	1. which functions are eligible for this ?
+	2. when do we wake-up sleeping tasks again ?
+
+--> also check, we have a certain amount of possible
+    instructions per second on a certain machine; there
+    should be a system to distribute these instructions
+    to all tasks satisfactorily
+
+--> further testing of the Linux scheduler regarding signals:
+    - does CTRL-C work on the code above ? or do we need kill -9
+      (this would show whether programs register their own
+      signal-handler for the signal TERM (is CTRL-C actually TERM ?))
+      -> CTRL-C works !
+    - how does it look when task1 is waiting for data from task2
+      (especially using pipes) ?
+
+raw design specs for the scheduler
+
+- there's an IDLE task which simply consists of
+  an infinite LOOP (other code in this task to come);
+  the IDLE task wants to consume as much as CPU-time
+  as possible
+  quote from linux-2.4.20/arch/i386/kernel/process.c:
+
+  /*
+  * The idle thread. There's no useful work to be
+  * done, so just try to conserve power and have a
+  * low exit latency (ie sit in a loop waiting for
+  * somebody to say that they'd like to reschedule)
+  */
+  void cpu_idle (void)
+  {
+	/* ... */
+
+	// this routine simply calls either an PM-version
+	// or a standard IDLE-function in a loop to do
+	// nothing but saving power and disabling interrupts,
+	// but it always checks if any tasks needs rescheduling
+	// (continue exec)
+	
+  }
+
+  The IDLE-task is always executed when the original
+  task cannot be executed due to SLEEPING or similar.
+  The IDLE-task receives the CPU-time originally
+  reserved for the original process.
+
+- normal tasks request a sleeping-state when they
+  cannot continue execution until a certain event
+  occurs (HW-IRQ, Pipe-Data from other task, a certain
+  point of time); this code usually resides inside
+  any kernel or (system-)library code, so it doesn't
+  need to be called by any user-program
+- to continue execution, a task must be sent a signal
+  to "wake it up" again (wake-up signal)
+- tasks receive a new member-flag in the s_task-struct,
+  "hassignal" which determines whether there's a pending
+  signal for the current (currently being executed task)
+  task; the scheduler checks on taskswitch whether
+  the "hassignal"-flag is set, that is it is set to
+  "TRUE"
+- signals are nothing else but simply code procedures
+  which are called by the scheduler when the "hassignal"
+  flag is set; (NOTE: we need to store somehow what
+  signal was sent to the task, thus we'd better store
+  the signal in the "hassignal"-member as an integer
+  value
+
+BUT
+- i still don't have any idea how to realize the sleeping
+  requests and waking-up in detail, how would this work
+  in a standard situation, like a task that's waiting
+  for keyboard input
+- see far above point (c): some tasks need to be
+  in an intermediate state of sleeping, they
+  sometimes or regularily have short interruptions
+  in execution as they have to wait for a slower
+  task/or the data-output is time-dependant
+
+SLEEPING
+--------
+
+There are currently two logical reasons why a task should
+be sent to a sleeping state (others might follow):
+
+- The task has called the sleep (unsigned long msecs)
+  function to put itself into a sleeping state for
+  a given period of time as provided as parameter
+  to the sleep function in milliseconds
+- The task is forced to wait for an external data-
+  resource (either for in- or output); these resources
+  can be pipes to other tasks, block- or chardevices
+  or similar (don't know other sources right now :))
+
+Sleeping over timer
+-------------------
+
+To request sleeping over the timer the task calls the
+kernel-library function sleep (unsigned long msecs);
+the task specifies the requested sleep time in milli-
+seconds. At first the task is removed from
+the task-loop, so that it won't be executed
+anymore. The sleep-function then calls a kernel-
+function called ms_to_ticks (unsigned long msecs)
+which will translate the time-span from milliseconds
+into machine-dependant ticks; ticks is nothing
+but an internal kernel-counter which is increased
+during every timer interrupt, thus the
+softwate-interrupt must not be disabled on any
+machine; only task-switching may be disabled.
+The tick-counter may also be increased in
+a lower frequency (that is every second IRQ
+or slower), but that's machine dependant
+and will not be discussed more deeply in here.
+But it may noted here that this frequency
+depends on the processor type as every
+type handles timer interrupts differently
+(e.g.: priority compared to NMI).
+
+If the number of ticks for the requested
+sleeping-period have been determined,
+the scheduler will add this ticks-value
+to the current system-ticks value and
+will write the result into the task's
+task-struct (s_task). From now on, the
+scheduler will check on every task-
+switch where this task's context would
+normally be switched into whether
+the system-ticks have reached the
+task's ticks-value or greater meaning
+that the task's requested sleeping-period
+is over. If yes, the scheduler will immediately
+put the task onto the task-loop again
+to put it into a running state again.
+
+Sleeping due to VFS-request
+---------------------------
+
+Every file-struct (struct s_file) contains
+a pointer to it's respective dentry-struct
+(struct s_dentry). The dentry-struct
+contains an update-flag, which is set
+by the writefile-function and cleared
+by the readfile-function.
+
+A task requests sleeping over VFS by
+specifying the dentry of the file
+which the scheduler should monitor.
+
+The scheduler puts the appropriate
+task into sleeping-state and checks
+regularily whether the update-flag
+of the dentry-struct is set, if yes
+the respective task is waken-up
+and can read data with readfile ().
+
+As devices are also accessed over
+the VFS as device-files, the sleeping
+for device-requests is built-in also.
+
+A short note on the delay-function
+----------------------------------
+
+I discovered that there's a reason to implement
+a delay-function as opposed to I thought before
+that the sleep()-function alone would be sufficient.
+The delay-function is called in modern operating
+systems to briefly interrupt the code-execution
+similar to sleep(), but delay() is for rather
+very short interruptions: While delay() is called
+to break for typically around 0.05 to 1ms, sleeps often
+last several thousand milliseconds (seconds) or
+even ten to hundred times longer. And sleep always
+invokes the scheduler to free-up the CPU-time
+but the breaks caused by delay() are too little
+and the whole scheduler-processing would produce
+too much time-overhead.
+
+These short delays are especially required for
+device I/O as almost any device which interacts
+with the CPU always needs some short delay
+after receiving or sending data. So when we
+will come to implement the block-driver we
+will defintely need a delay-function.
+
+Rough sketch for a possible scheduler design
+--------------------------------------------
+
+Functions:
+- sleep (n) - suspend task execution for n msecs;
+  this will dequeue the current task for a given
+  period of time and set its state to INTERRUPTIBLE
+- suspend (s_task * task) - causes the task be to
+  suspended from execution; there are two types
+  of suspension: INTERRUPTIBLE (by signals)
+  and NON_INTERRUPTIBLE (can only resumed with wake_up)
+- wakeup (s_task * task) - causes the task specified
+  by task to be put back into the queue and
+  set its state to RUNNING
+- de-/queue (s_task * task, state)/(s_task * task)
+  remove/put task from/to queue and set state appropriately
+- switchto - perform task-switch to next waiting
+  task
+
+Notes on task initialization:
+
+- when executing a task we have to put the address
+  of the kill_task function onto the stack so that
+  when the task terminates the task-environment
+  executes the kill code to clean-up itself; the
+  kill function must then invoke schedule to enforce
+  a task switch

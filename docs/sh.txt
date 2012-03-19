@@ -1,0 +1,15 @@
+Notes on the sh-shell in pOS
+----------------------------
+
+features
+--------
+
+- auto file/command-completion (like Mozilla)
+- file filters (exclusion/inclusion)
+- alias command (including store possibility)
+- standard prompt is /<dir>:
+- obeying mistakes.txt
+- a toggable clock
+- passes parameters to application by opening
+  a pipe and the entry-code of the app must
+  open that pipe to read the parameters

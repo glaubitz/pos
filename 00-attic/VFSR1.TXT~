@@ -1,0 +1,134 @@
+pOS - portable Operating System, v0.0.1
+VFS - the Virtual FileSystem
+01/14/03
+--------------------------------------------------------------
+
+This new filesystem concept is inspired by the standard file
+system hierarchies used in Unix systems like Linux. It super-
+cedes the current concept which differentiates files from
+devices. The new filesystem lists all files and devices
+in a common file struct.
+
+First of all, an overview of the VFS components and their interfaces:
+
+
+                |----------------|
+                |    PROCESS     |
+                |----------------|
+                        |
+                        | casts file i/o-request
+                        | over OpenFile, ReadFile etc.
+                        \/
+                |----------------|           |----------------|
+                |      VFS       |           |   FS-Library   |
+                |                |           |                |
+                | OpenFile ()    | redirect  | OpenFile ()    |
+                | ReadFile ()    |  request  | ReadFile ()    |
+                | WriteFile ()   |---------->| WriteFile ()   |
+                | CloseFile ()   |           | CloseFile ()   |
+                | DeleteFile ()  |           | DeleteFile ()  |
+                | RenameFile ()  |           | RenameFile ()  |
+                |----------------|           |----------------|
+                       /\                            |
+                        |   loopback device          |  request direct
+                        -----------------------|     |  device i/o
+                                               |     \/
+                                             |----------------|
+                                     reads/  |   DEV-DRIVER   |
+                 |----------------|  writes  |   readblocks   |
+                 |     DEVICE     |<---------|   writeblocks  |
+                 |----------------|          |   getchars     |
+                                             |   putchars     |
+                                             |----------------|
+
+
+Now comes a detailed description what each of the elements of
+the filesystem chain does:
+
+1. Process:
+   Calls functions OpenFile, ReadFile, WriteFile, CloseFile,
+   RenameFile, DeleteFile etc to request the respective
+   filesystem operation. The process passes a filename
+   to these functions, e.g. /files/file01
+
+2. VFS:
+   VFS first tries to determine the filesystem and the respective
+   device of the requested file by parsing the string-type filename:
+
+        LOOP:
+        - determine filesystem of parent directory through memory mountlist
+          - success goto ENDLOOP
+          - failure
+            - if parent folder = "/" (root), then VFS returns error
+              as it could not determine the files FS, possible
+              error is an invalid filename or the device not
+              been mounted
+            - if parent folder is not = "/" goto LOOP
+        - try to call the requested i/o functions in the corresponding
+          filesystem library with filename and device as parameter
+
+3. Filesystem:
+   Performs the requested filesystem operation and returns an error
+   status to VFS. The filesystem-library accesses the respective
+   device over its driver which is given by the DEVINFO struct.
+
+4. Driver:
+   Send direct i/o-requests to the respective device. Must also
+   return error status but to filesystem-library. This part
+   of the filesystem-chain is machine-dependent.
+
+5. Device:
+   Performs requested i/o-operations and also returns error status.
+
+A note on loopback devices (or mounting a file instead of a device):
+
+With the VFS software layers it is very easy to implement support
+for so-called loopback devices. These are used to mount filesystem
+images from a file. This way it is possible to have an image
+of a floppy-disk on any other disk-device and mount this image
+to access the files on the image without the need of the original
+diskette. I.e. you can emulate several disk-drives even if
+you own only one.
+
+The loopback device is implemented as a device driver which
+has the same interface to the filesystem-libraries as normal
+device-drivers. On the other interface side, the loopback
+device behaves like a normal process and requests the
+file i/o-request to the VFS. Thus the VFS-chain is run through
+twice recursively when using a loopback device. See
+the first diagram above. The VFS passes a pointer to
+a MNTINFO-struct to the filesystem which must pass this
+parameter also to the device-driver. With the MNTINFO-
+struct, the loopback-device can determine the path
+of the image-file which it has to open for i/o.
+
+A note on direct device access:
+
+Sometimes a process needs to access a storage device directly
+for maintenance. This can be for formatting, partitioning,
+defragmenting a disk or simply for writing a disk-image
+directly to disk. This can be archived by definining a
+direct access filesystem, i.e. /fs/direct.c which simply
+reads/writes raw bytes from/to a device. The devices
+are accessed through the /dev-directory which contains
+sub-directories for each driver supported by the kernel.
+So accessing the block-device 0, which uses the 1541block-
+drivery, a process must simply open the file
+"/dev/1541block/block0".
+
+A note on the mountlist:
+
+The mountlist is an array of type MNTINFO and is a member
+of the k_kernel-struct. The mountlist contains a target-
+path and a source-path, a pointer to the corresponding
+DEVINFO-struct and an integer variable which determines
+the filesystem-type:
+
+typedef struct _MNTINFO {
+
+	char [__MAX_VFSPATHLENGTH] targetpath;
+	char [__MAX_VFSPATHLENGTH] sourcepath;
+	DEVINFO * device;
+	int fstype;
+
+} MNTINFO;

@@ -1,0 +1,8 @@
+TODO.TXT for pos/lib
+08/30/02
+
+note on pos_pat.c and pos.c:
+
+if the compiler should complain about implicit casting
+in pos.c and refuses to compile, replace pos.c with
+pos_pat.c which should solve this.

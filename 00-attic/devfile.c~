@@ -1,0 +1,71 @@
+/*
+ * devfile.c
+ * virtual device files
+ * 02/11/03
+ */
+
+#include <kernel.h>
+
+
+int k_isdevice (char * pathname) {
+
+	unsigned char i;
+
+	i = strlen (pathname);
+	
+	pathname+= i - 1;
+
+	while ((*pathname--) != '/')
+		;
+
+	for (i = 0; i <= c_MAXNDEVICE; i++)
+		if (strcmp (k_kernel.devicelist [i].filename, pathname) == 0)
+			return -1;
+	return 0;
+}
+
+struct s_file * k_devopen (char * pathname, int flags) {
+
+}
+
+int k_devclose (struct s_file * file) {
+
+	if (!file->flags & !c_FFLAGOPEN) {
+		k_setlasterror (c_ERRFILENOTOPEN);
+		return 0;
+	}
+
+	file->fs.devfile.device->owner = c_PIDFREE;
+	file->flags = file->flags ^ c_FFLAGOPEN;
+
+	return 0;
+}
+
+unsigned long k_devread (struct s_file * file, void * buffer, unsigned long bufsize) {
+
+	return 0;
+}
+
+unsigned long k_devwrite (struct s_file * file, void * buffer, unsigned long bufsize) {
+
+	return 0;
+}
+
+int k_devremove (struct s_file * file) {
+
+	k_setlasterror (c_ERRFILEREADONLY);
+
+	return 0;
+}
+
+int k_devrename (struct s_file * file, char * newname) {
+
+	k_setlasterror (c_ERRFILEREADONLY);
+
+	return 0;	
+}
+
+int k_devfind (char * pattern, char * pathname) {
+
+	// no concept yet !
+}

@@ -1,0 +1,40 @@
+pOS Time functions & concept - 07/27/03
+---------------------------------------
+
+pOS provides basic functionality for date and
+time. However the kernel maintains the time
+not directly but it increments a kernel-variable
+periodically every n-th interrupt (the n may
+vary from machine to machine). But the
+kernel provides functions to convert this
+tick-value into milliseconds which can be
+used to determine the uptime of the machine.
+For more information the ticks-mechanism
+see sched.txt.
+
+In order to use real date and time, the kernel
+provides the function k_settime to set the local
+time. Any user process can call k_gettime anytime
+to request the current system-time then.
+
+The s_kernel struct has two member variables for
+date & time functionality:
+
+- unsigned long ticks - ticks since uptime
+- s_time starttime - the real date of the
+  system start, this is initially always
+  set to January, 1st 2000, 00:00 but it
+  is changed when k_settime is called
+  (see below)
+
+k_settime (struct s_time newtime):
+
+1. get uptime-ticks from kernel, convert to msecs
+2. deduct uptime from newtime
+3. store newtime-uptime to k_kernel.starttime
+
+struct s_time k_gettime ()
+
+1. get uptime-ticks from kernel, convert to msecs
+2. add uptime to k_kernel.starttime
+3. return k_kernel.starttime + uptime

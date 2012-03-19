@@ -1,0 +1,22 @@
+pOS - portable Operating System
+
+	* DEPRECATED *
+
+NMI-Handler:
+
+The NMI-Handler controls the process management.
+(this is better done by IRQ handler ??)
+It calls routines from the schedule.c to deter-
+mine if the current process has still the prio-
+rity to run, and exchanges the current process
+if necessary.
+
+This can only be done through the NMI since the
+normal IRQ can be disabled by a normal process
+with SEI.
+
+To prevent a process exchange kernel routines can
+call the scheduler function __lockactiveprocess.
+Currently there is the problem that this function
+has to be called immediately after a kernel function
+was called that needs to determine the caller process.

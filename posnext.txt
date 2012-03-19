@@ -1,0 +1,39 @@
+	pOS Next Development Tasks - 12/06/06
+	(This is the most recent todo-list which supercedes all others !)
+
+	-- CLEAN UP TODO LIST AND DOCUMENTATION
+
+	- get capability-information for cc65 (inline assembly !!, .define vs #define)
+	  (see `info cc65`)
+	- clean-up makefiles
+	- all functions which return data should return them over pointer operations
+	  (the return-value of any function is to yield an error code always)
+	- implement scheduler, one task appears as one task only (no TIDs !)
+	  (just like Unix style, process-starting with exec, forking with fork)
+	  -> main problem here is that I actually don't know how to distribute CPU-time
+	     among the tasks and how to define one round-trip
+	- implement signals over callback-functions (for signals see linux-0.0.1/kernel/sched.c:214
+	- dcache.c lacks cache-syncing/flushing
+	- string.c lacks strcpy, strncpy
+	- drivers/block/zero.c and drivers/block/null.c
+	  don't check whether they've been init'd !, fix that !
+	- implement devfs filesystem-driver
+	- implement pipe-mechanism: pipe () creates a pair of s_file two processes can
+	  communicate through this pipe
+	- adapt vfs to devfs-driver, kick all that devfile identification
+	  stuff !
+	- write ticks_to_msecs / msecs_to_ticks / gettickcount
+	- dry-check all functions in kernel/time.c
+	- finish c64 console-driver (find out where linux interprets ESC-sequences)
+	- write 1541block-driver + 1541fs.c (direct access), CIA-Clock/Timer driver
+	- create error-code table and implement error-codes (return -EINVAL :))
+	- rewrite memory management, process-management, task-management
+	- add fork and exec-function
+	- put commonly used code inside functions/macros:
+		e.g.
+		- struct evaluation/processing/changing
+		  (opening/closing etc. files, devices etc.)
+	- shouldn't the driver status (init'ed ?) flag reside
+	  rather in it's s_device struct in k_kernel.devices ?
+	  good point: probably YES
+	- port shell.c to pOS

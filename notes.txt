@@ -1,0 +1,224 @@
+Important Kernel Notes - 11/26/03
+---------------------------------
+
+0. DON'T FORGET:
+	registers are NOT properly saved before schedule
+	is called; registersaving must be FIRST in timer-IRQ
+
+1. in include/asm-c64/schedule.h:
+
+	__saveenv
+
+	this routine cannot handle stacks larger than
+	128 bytes due to the fact that it uses the
+	"branch if plus"-condition in the stack-save
+	loop: the loop aborts when the negative flag
+	is set, this happens both when decrementing
+	a zero value to -1 or when the value is larger than
+	127 (127 = 01111111, 128 (unsigned) = 10000000
+	= -128 (signed))
+
+2. Constant strings can be contingated by placing serially
+   as an R-value or argument without severed by any commas:
+
+	printf ("This is" " a test.");
+
+   This is useful when combining predefined strings with strings
+   in the source-code (e.g. #define __STR_COPYRIGHT (C) adi 2001)
+
+3. To circumvent MAJOR problems with the compiler-
+   generated code - DO NOT USE ZP FOR USER MEMORY ! -
+
+4. consider writing code for timer-interrupt in asm, FASTER !
+
+5. saving up some work
+   consider this:
+
+   static inline void sleep_on (int taskid, int state) {
+
+	// as it is static it is local to this file
+
+	// as it is INLINE, the function code will be
+	// pasted at any places called
+
+	// --> SAVED SOME HACKING WORK
+  }
+
+  void uninterruptible_sleep_on (int taskid) {
+
+	sleep_on (taskid, UNINTERRUPTIBLE);
+  }
+
+  void interruptible_sleep_on (int taskid) {
+
+	sleep_on (taskid, INTERRUPTIBLE);
+  }
+
+6. Notes on Linux 1.x
+
+  fork.c - contains calls to spawn new processes
+  (as there is always at least one proc running
+  they call it fork)
+
+  sched.c - schedule() is often to update tasks,
+  e.g. when a signal has been sent to it,
+
+  the MOST important timer interrupt is registered (do_timer())
+  with the function request_irq (TIMER_IRQ, ...)
+  within the sched_init () call, when this fails,
+  kernel will do infinite loop
+
+  #define TIMER_IRQ 0
+
+  init.c - the start_kernel() function is called
+  from /boot/head.S, the entry kernel code and
+  initializes the system, after that it enters
+  an infinite loop to idle calls (idle ()), if
+  this function returns, the system will hang
+
+  signal.c - have a close look at do_signal(), i think
+  a call to this results to a call to the respective
+  handlers
+
+  MOST important:  void do_timer(struct pt_regs *regs) in /kernel/timer.c
+
+  also to be noticed:
+
+  signal.h - the signals, and the sig_action struct
+  sched.h - the task struct and tss struct
+  exit.c - contains the important function send_sig and generate
+
+  when a process/task ?? receives sig_suspend, the function
+  sys_sig_suspend will be called and the task will be
+  looping until it receives a new signal
+
+7. ALL kernel functions SHOULD have a return value so that the calling
+   process gets information on the success of the calling of the function
+   and can then call getlasterror (-> see MSDN-Library on this !)
+   07/23/03: This M$-technique is probably going to be abandoned
+
+8. Check all 6510-assembler code for the following
+
+   o  PHP always pushes the Break (B) flag as a `1' to the stack.
+      Jukka Tapanimäki claimed in C=lehti issue 3/89, on page 27 that the
+      processor makes a logical OR between the status register's bit 4
+      and the bit 8 of the stack pointer register (which is always 1).
+      He did not give any reasons for this argument, and has refused to clarify
+      it afterwards. Well, this was not the only error in his article...
+
+   o  Indirect addressing modes do not handle page boundary crossing at all.
+      When the parameter's low byte is $FF, the effective address wraps
+      around and the CPU fetches high byte from $xx00 instead of $xx00+$0100.
+      E.g. JMP ($01FF) fetches PCL from $01FF and PCH from $0100,
+      and LDA ($FF),Y fetches the base address from $FF and $00.
+
+   o  Indexed zero page addressing modes never fix the page address on
+      crossing the zero page boundary.
+      E.g. LDX #$01 : LDA ($FF,X) loads the effective address from $00 and $01.
+
+   o  The processor always fetches the byte following a relative branch
+      instruction. If the branch is taken, the processor reads then the
+      opcode from the destination address. If page boundary is crossed, it
+      first reads a byte from the old page from a location that is bigger
+      or smaller than the correct address by one page.
+
+   o  If you cross a page boundary in any other indexed mode,
+      the processor reads an incorrect location first, a location that is
+      smaller by one page.
+
+   o  Read-Modify-Write instructions write unmodified data, then modified
+      (so INC effectively does LDX loc;STX loc;INX;STX loc)
+
+   o  -RDY is ignored during writes
+      (This is why you must wait 3 cycles before doing any DMA --
+      the maximum number of consecutive writes is 3, which occurs
+      during interrupts except -RESET.)
+
+   o  All registers except the Program Counter remain unmodified after -RESET.
+      (This is why you must preset D and I flags in the RESET handler.)
+
+9. IMPORTANT:
+
+            B   Break flag
+
+                This flag is used to distinguish software (BRK)
+                interrupts from hardware interrupts (IRQ or NMI). The
+                B flag is always set except when the P register is
+                being pushed on stack when jumping to an interrupt
+                routine to process only a hardware interrupt.
+
+                The official NMOS 65xx documentation claims that the
+                BRK instruction could only cause a jump to the IRQ
+                vector ($FFFE). However, if an NMI interrupt occurs
+                while executing a BRK instruction, the processor will
+                jump to the NMI vector ($FFFA), and the P register
+                will be pushed on the stack with the B flag set.
+
+
+        IRQ, NMI, RESET and other handlers must call additional machine
+        specific assembler code before doing their actual job.
+        For example:
+                void __irq () { // on C64
+                        do_machine_irq // is #defined in asm/irq.h
+                        // we would check here for the above stuff
+
+                        // then the actual irq-stuff comes here
+
+                        // alternative:
+                        // IRQ-vectors are set to machine specific
+                        // assembler-code, that will call kernel-code
+                }
+
+     But the simultaneous occurrence of NMI and BRK
+     is far more fatal. If you do not check the B flag in the NMI
+     routine and subtract two from the return address when needed, the
+     BRK instruction will be skipped.
+
+10. What about the RAM-area from A000-CFFF, is it accessible or not ??
+    64DOC.TXT claims that accesses to this area are ignored.
+
+    And what about the I/O-area ?? How do I access the memory below ??
+
+    It's explained in 64DOC.TXT from Line 1348 in a wonderful chart
+    (print that chart !!!).
+
+11. Kernel status information
+    To develop a nice interface for kernel status information we need to
+    sneak another peek :) in the Linux (kernel) sources. I think the source
+    codes of "ps", "free" and "df" will do for the first time. We get a basic
+    understanding of how Linux gives kernel internal information to processes.
+
+12. Develop a kernel configuration interface so that kernel settings can be
+    loaded from / saved to a text file using cfgfile.c. I think a simple
+    loadconfig / saveconfig will do it.
+
+13. Check all library code for proper include-directives (ifndef - include).
+
+14. Check that no kernel functions alter pointers when passed as parameters,
+    e.g. when a calling process passes a pointer to a string, the function
+    must not alter this pointer for string operations instead it must
+    use it's own pointer which it assigns the value of the passed by
+    pointer.
+
+15. Should we replace the dynamic sizes of the memory blocks with fixed
+    page sizes ? Does this increase speed ? (Presumably yes, but I cannot
+    yet fully explain neither know for sure).
+
+16. In kernel 0.0.1 (C64) the 1541fs-driver will actually directly access
+    the VC1541-floppy and bypass the 1541 block-driver. This was chosen
+    for better peformance in favor of real implementation. But this
+    will not limit the VFS-design in any ways, the fs-driver conceals
+    all this action and the rest of the kernel will think it does the
+    I/O over the regular block-driver (I haven't any idea for accessing
+    filesystems on block-devices under real circumstances anyway, so what ?).
+
+17. We actually need to rewrite the mm page-oriented as otherwise
+    we would get severe problems with the compiler. According to
+    that long documentation on the 64 the 65xx CPU series have
+    some problems with page-crossing instructions (it won't
+    fetch args from the next-page but from the beginning of
+    the current page (which reminds me of the address wrap-around
+    of the 8086 CPUs at 1Mbyte :-)))
+
+18. Don't forget to check all kernel-code for preemptibility !
+    Set spinlocks to deactivate task-switching if neccessary.

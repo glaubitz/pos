@@ -1,0 +1,18 @@
+/*
+* cfgfile.h
+* dec., 06 2000
+* configuration file library
+*/
+
+#include <pos.h>
+#include <lib/string.h>
+
+typedef struct _SETTING {
+
+	char * name;
+	char * value;
+
+} SETTING;
+
+void	readcfg (SETTING);
+void	writecfg (SETTING);

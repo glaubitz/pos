@@ -1,0 +1,120 @@
+====================================================
+			pOS
+                TODO List - 05/16/2005
+====================================================
+
+! Read the todo.txt files in the source-subfolders.     !
+! Read notes.txt for IMPORTANT notes on the kernel.     !
+! Read docs in the document folder.                     !
+
+1. Check all compiler-generated code for re-entrability !
+   (the code uses zeropage !!)
+
+2. Answer questions in /document/questions.txt.
+
+3. Learn more about interrupt timings by reading
+   C64 hardware document. How many instructions
+   are executed inbetween every IRQ ?
+   07/22/03: just do some experimentation until
+   the (parallel) execution satisfactory
+
+4. Add support to hook also NMI and other system
+   events (shutdown etc).
+
+5. Add idle thread to consum all unused CPU time.
+   (PID 0) (see also point 17 beneath).
+   07/22/03: for everything about the idle-task
+   see sched.txt
+
+6. Get informed about Atoms and their use, implement
+   this technique.->Atoms are global kernel variables.
+   -> this is Microsoft-style and NOT used in pOS that way !
+
+7. When the kernel finally works, put comments every-
+   where where needed to improve readabilty and to
+   paste some jokes ;).
+
+8. Add volatile data protection mechanism. This mechanism
+   would then write all memory dynamically allocated by a
+   process to disk when the process has to be killed due
+   to no responding to kernel end-process signals.
+
+9. Add file protection for my own file system. This mechanism
+   writes changed files new free space on the disk and just
+   alters the directory entry of the file. The file will
+   still be recoverable after a save as its data is not
+   overwritten. The area of the old file will be marked
+   as free and will only overwritten when there is no
+   more disk free space available.
+
+10. Integrate a clock in the shell "sh" running in an
+    extra task. For this we need a sleep(MILSECS) function.
+    Also we need more information about the IDLE process.
+    -> Has been discarded.
+
+11. The Relocate code needs to be written (C64 only).
+
+12. Analyze the c64 standard memory layout accurately and
+    concatenate as much as possible free memory to one
+    block (e.g. by moving the screen-text memory from
+    $400 to the end of free memory, just adjust 64con.s).
+
+13. CC65 and zeropage:
+    cc65 uses zeropage for some code; when a pOS-app has been
+    compiled with cc65, during a task-switch these zp-data
+    will be overwritten by another task, remedies are:
+    a) modify cc65 to avoid using zeropage but call some
+       kernel routines
+    b) save zeropage before task-switch in TASKENV-struct (easier)
+
+14. Write the configuration tool "config" in ./tools. This should be
+    done after a WORKING kernel has been released so that it doesn't
+    need to be adjusted permanently to the peridic kernel changes
+    during development.
+
+15. Write makedev-tool (tools/makedev.c).
+    -> Not required with the current devfs/VFS-concept.
+
+16. get a list with all ESCAPE codes and a ESCAPE code
+    definition (HOW IT SHOULD WORK)
+
+17. replace putc and getc with putstring and getstring respectively
+    (why simply let putc/getc and puts and gets simply co-exist ??)
+    btw: rename putstring/getstring to puts/gets, that's easier :)
+
+18. remove preceding "__" from all kernel symbols
+    introduce new system for all global symbols:
+    prefix              meaning
+    j_                  jump table symbol (i.e. a function pointer)
+    k_                  kernel symbol (e.g. a function)
+    c_                  constant/defined value (e.g. a message)
+    m_                  macro (assembler or C or else) (i.e. inline code)
+    d_                  driver code symbol (i.e. all global symbols of a driver)
+
+19. getlasterror, setlasterror shall become task-related not
+    process-related (as it is now), we should investigate more
+    closely and compile a list with pro and contras for this
+    decision, check all kernel and related code for this
+    reason.
+    07/23/03: we probably gonna remove get-/setlasterror completely
+    -> Yes, discard that, this is Microsoft style !
+
+20. All functions returning structs should better take a pointer
+    to an existing (empty) instance of this type of struct
+    and should fill-in the inquired data over this pointer.
+    This will speed up code (less stack pushing/popping) and
+    save stack memory (remember the stack needs to be
+    saved before task-change too).
+
+21. Develop a nice concept for signals.
+
+22. Develop a nice concept for pipes (IPC*). Shall a process/task
+    be sent a signal with the filename of the pipe to open
+    for IPC ?
+
+23. Check all kernel functions for possibilities of failures
+    and implement error-code returning in these cases.
+
+24. Write driver for CIA-Timer/Clock device
+
+* IPC Inter Process Communication

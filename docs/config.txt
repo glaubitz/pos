@@ -1,0 +1,25 @@
+* pOS
+* Notes on the kernel configuration utility
+* 05/06/03
+
+- the utility is used to easily manage the kernel
+  configuration files; nevertheless these files can
+  be edited manually
+
+- the utility will be available in two versions, a
+  text-based and a GUI-based version
+
+- the utility must be written using portable code
+  with libraries that exist on multiple platforms
+
+- proposals:
+  a) the text-based version should do i/o using the
+     C standard libraries
+  b) the GUI-based version should use the TK- or GTK-
+     libraries
+
+- current progress:
+  a) the text-based version has not been started yet
+  b) the GUI-based version is called tkconfig and
+     can be found in the /tools-folder of the pOS
+     source tree

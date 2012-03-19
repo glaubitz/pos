@@ -1,0 +1,44 @@
+booting pOS...
+
+portable Operating System (x86)
+
+system initialisation went ok
+
+loading init....
+
+init 1.2.2
+reading /etc/inittab...[OK]
+
+loading bash
+
+pOS-1.0.0-x86/: cd src
+pOS-1.0.0-x86/src: cd /doc
+pOS-1.0.0-x86/doc: ed README
+
+ed - an editor - 0.0.2 - 02/03/04
+
+pOS Release Notes - 1.0.0
+
+Welcome to pOS, version 1.0.0, the simplest operating
+system in the world with features of adavanced operating
+systems like multitasking, a virtual filesystem and
+high portability. pOS is very content with any hardware
+and thus it runs already on an 8086 with 256kBytes RAM:
+
+pOS hardware requirements:
+
+for an X86-computer
+
+minimum:
+- 8086-processor
+- 256kBytes RAM
+- 40x25 display
+
+recommended:
+- 80286-processor
+- 1MBytes RAM
+- 80x25 display
+
+process was killed.
+
+pOS-1.0.0-x86/doc: 

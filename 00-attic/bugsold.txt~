@@ -1,0 +1,59 @@
+pOS - portable Operating System
+Version 0.0.1
+BUGS
+05/25/01
+
+
+BUG01:
+
+Some system functions forget to call __unlock when they
+fork to another branch within their code and then return.
+
+I think we can waive for locking/unlocking system functions
+when we make them reentrant. but can the compiler make them
+reentrant ?
+
+BUG02:
+
+Some kernel symbols (names etc.) have names with upper-case
+letters, change these to use lower-case letters only.
+
+BUG03:
+
+free (remalloc) does not accept "wild" pointer values within a memory block.
+But it often occurs that a pointer is incremented or decremented.
+The free function will then need to jump from memory block
+to memory block to find the block the pointer belongs to. But I don't
+know whether this feature is in line with other OS designs, does
+Linux free accept wild pointers ?
+
+BUG04:
+
+The Commodore C64 boot loader (boot) might display wrong error messages
+when failing to load the kernel image. It might state that there is a
+disk error though the floppy simply can't find the kernel image.
+
+This is an issue with the 1541 floppy's CBM-DOS 2.6. When trying to
+load a file with no disk inserted the floppy will produce an error
+74 (device not ready). After that the floppy produces this error
+also when the drive is ready but the file is not found. Instead
+producing error 62 (file not found) it produces 74 again. This
+can only resolved by powering the floppy off and on again.
+
+Example:
+1. Make sure there's no disk in the floppy
+2. LOAD"FILE",8 // FILE, a file that does not exist on the disk
+3. type this BASIC program
+	1 OPEN15,8,15
+	2 INPUT#15,NR
+	3 PRINT NR
+	4 CLOSE15
+   	RUN
+   the computer will answer "74"
+4. Insert any formatted disk and
+   reproduce steps 1 to 3, the computer
+   will still answer "74" instead "62"
+
+This has been fixed with CBM-DOS 3.0 on the VC-1571 floppy
+drive. But the 1571 must be in C128 mode otherwise it will
+behave like a 1541-I/II including their bugs.

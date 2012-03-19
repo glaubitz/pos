@@ -1,0 +1,48 @@
+GENERALLY:
+
+Check out code for other architectures, they seem
+to be a bit easier to understand, especially the
+alpha initialization code !!
+
+
+
+interesting:
+
+include/asm/config.h
+include/asm/current.h - code that returns current task
+include/asm/atomic.h
+include/asm/a.out.h
+include/asm/desc.h
+include/asm/ldt.h
+include/asm/io.h
+include/linux/init.h
+include/asm/keyboard.h
+arch/i386/kernel/irq.c
+arch/i386/kernel/process.c
+arch/i386/kernel/ptrace.c (?)
+arch/i386/kernel/signal.c
+arch/i386/kernel/setup.c
+arch/i386/kernel/entry.S
+arch/i386/kernel/head.S - the kernels "head" when loaded into mem (?)
+arch/i386/kernel/semaphore.c
+arch/i386/kernel/trampoline.S (?)
+arch/i386/kernel/i386_ksyms.c - kernel symbols
+
+arch/alpha/boot/main.c
+
+/* what does the preceding 'b' stand for ? */
+
+arch/i386/boot/bootsect.S
+arch/i386/boot/Setup.S
+arch/i386/boot/bbootsect.S
+arch/i386/boot/bsetup.S
+
+
+// all code concerning task switching !!
+
+// all code concerning atoms !
+
+// all code concerning the mmu !
+
+
+

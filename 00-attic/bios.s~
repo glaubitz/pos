@@ -1,0 +1,31 @@
+;/*
+* bios.S
+* dec., 06 2000
+* commodore 64
+* basic input output system
+*/
+
+
+	org	0x0000
+
+	.word #readsector, #writesector, #printc, #getchar, #getdiskparam
+
+readsector:
+
+	rts
+
+writesector:
+
+	rts
+
+printc:
+
+	rts
+
+getchar:
+
+	rts
+
+getdiskparam:
+
+	rts

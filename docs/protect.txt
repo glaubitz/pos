@@ -1,0 +1,32 @@
+The data protection in pOS v0.0.1
+may, 12 2001
+
+pOS will feature two data protection mechanisms
+to prevent data in memory and on disk drives
+from loss.
+
+Data in memory can be protected through a mechanism
+called "volatile memory protection". This protection
+is activated when any process/task hangs and needs
+to be killed. After the kernel has removed the task(s)
+from the task schedule, all memory dynamically allocated
+will be written to files containing the raw memory data.
+Applications could integrate functions that can reimport
+those raw-data and restore them to the original state.
+
+
+Data on disk drives is protected through a mechanism
+called "overwritten file restore". This mechanism
+is integrated into the filesystem driver and therefore
+is probably not available on all filesystems. The mechanism
+keeps back old files on the filesystem when they are over-
+written with altered versions of the file. This is done
+by writing the content of the new file to other free areas
+on the disk and marking the blocks of the old file as free.
+But the filesystem will retain the block information of the
+old file and restore the old file when requested.
+
+
+Both mechanism will increase the data integrity of the operating
+system and will enable it to handle important data on a high
+safety level.

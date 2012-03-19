@@ -1,0 +1,24 @@
+/*
+* irq.c
+* pOS - portable Operating System
+* 10/01/01
+*/
+
+#include <kernel.h>
+#include <ASM/schedule.h>
+
+void __irq () {
+
+	WORD i = __kernel.nhooks;
+	
+	__kernel.current_ttl--;
+
+	if (__kernel.current_ttl == 0)
+		__schedule ();
+
+	/*
+	while (i != 0) {
+		i--;
+		__kernel.hooks[i].callback ();
+	}*/ // who wrote that crap ???
+}

@@ -1,0 +1,60 @@
+05/17/01
+
+How system routines are called in Linux 0.0.1
+
+Linux' system calls are quite easy in version 0.0.1:
+
+To put those into practice you only need to know
+about how symbol-names are renamed in object files
+by the C-compiler.
+
+Okay, here we go:
+
+System routines are written in Assembler, their
+names are preceded with an '_'. Example:
+
+_sys_fork:
+; (...)
+ret
+
+/include/linux/sys.h
+
+contains an array that contains pointers to all
+kernel routines. If you look at the array you
+see that the names are not preceded with a '_'.
+This is because the assembler object code is created
+with an assembler that does not alter symbol names.
+But when the C-compiler compiles the code with the
+array it will replace all symbol names with
+ones with an preceding '_'. When the linker then
+resolves the symbols it will set the pointers
+to the code created by the assembler.
+
+Example:
+
+_sys_fork:
+
+; (...)
+
+ret
+
+
+void (* fn) sysfn [] = {sys_fork};
+
+the compiler will replace "sys_fork" with "_sys_fork"
+thus the linker can resolve the symbols with the
+assembler code.
+
+The routines itself are called like the MS-DOS service
+interrupts. You call them with "int 0x80". Before that
+you need to store the number of the routine into eax.
+
+These numbers and the syscall macros are defined in
+/include/unistd.h
+
+
+SUMMARY:
+
+Linux uses a fixed table containing pointers to
+all routines. These are called by processes
+using the syscall macros.

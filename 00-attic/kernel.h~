@@ -1,0 +1,118 @@
+/*
+* kernel.h
+* 02/26/02
+* kernel include file
+*/
+
+#ifndef __KERNEL_H
+#define __KERNEL_H
+
+#include <config.h>
+#include <const.h>
+#include <types.h>
+
+#define __initsignals \
+{ \
+\
+		__sig_sleep, __sig_wakeup, __sig_kill, \
+		__sig_user, __sig_user \
+}
+
+/* pOS functions */
+
+/* devices */
+
+DEVINFO * __getdevice (char * name);
+BOOL __freedevice (DEVINFO * device);
+BOOL __putc (DEVINFO * device, char c);
+char __getc (DEVINFO * device);
+BOOL __putstring (DEVINFO * device, char * string);
+MEMVAR __getstring (DEVINFO * device, char * buffer);
+BOOL __writeblock (DEVINFO * device, BYTE * buffer, WORD nbytes);
+WORD __readblock (DEVINFO * device, BYTE * buffer, WORD nbytes);
+
+/* file i/o */
+
+DWORD   __getfilelength (FILEINFO *);
+DWORD   __readfile (FILEINFO * file, BYTE buffer []);
+DWORD   __writefile (FILEINFO * file, BYTE buffer []);
+BOOL    __deletefile (FILEINFO * file);
+BOOL    __renamefile (FILEINFO * file, char * newname);
+FILEINFO * __createfile (BYTE drive, char * filename,
+					WORD ATTRIBUTES);
+BOOL __initdisk (BYTE drive);
+
+/* irq functions */
+
+IRQPROC * __addirqproc (IRQPROC * irqproc);
+IRQPROC * __removeirqproc (IRQPROC * irqproc);
+BOOL __enableirqproc (IRQPROC * irqproc, BOOL enable);
+
+/* memory */
+
+void * __malloc (MEMVAR size);
+void * __remalloc (void * object, MEMVAR size);
+void __memset (void * object, MEMVAR size, BYTE value);
+BOOL __free (void * object);
+MEMVAL __getfreemem ();
+MEMVAL __getreservedmem (MEMBINFO * pmembinfo);
+MEMVAL __getusedmem (MEMBINFO * pmembinfo);
+
+/* process */
+
+PROCINFO * __createproc (char * filename, BYTE priority);
+BOOL __killproc (PROCINFO * proc, WORD flags);
+BOOL __isowner (PROCINFO * child, PROCINFO * parent);
+PROCINFO * __getproc (BYTE pid);
+BYTE __getlasterror ();
+void __setlasterror (BYTE error);
+
+/* signals */
+
+BOOL __send_signal (TASKINFO * process, BYTE signal);
+
+/* tasks */
+
+TASKINFO * __addtask (void * heap, PROCINFO * owner);
+void __removetask (TASKINFO * task);
+
+/* time */
+
+TIMEINFO * __gettime (TIMEINFO * time);
+void __settime (TIMEINFO * newtime);
+
+typedef struct __KERNEL {
+
+	/* when in this mode all devices belong to the kernel
+		and task-switching is disabled */
+
+        BOOL	kernelmode;
+	BYTE	lasterror;
+
+	WORD	nirqprocs;
+        WORD	nopenfiles;
+        WORD	nprocs;
+        WORD	ntasks;
+
+        /* the following are buffers to find faster
+                ids for new processes/tasks */
+
+        BYTE	lastfreepid;
+        BYTE	lastfreetid;
+
+        IRQPROCS        irqprocs [__MAX_NIRQPROC];
+
+        DEVINFO		device [__MAX_NDEVICE];
+        MOUNTINFO	mountinfo [__MAX_NMOUNTED];
+
+
+        PROCINFO	procs [__MAX_NPROCS];
+        TASKINFO	tasks [__MAX_NTASKS];
+
+        WORD		icurrent;
+        TASKINFO *	current;
+        WORD		current_ttl;
+
+} KERNEL;
+
+#endif

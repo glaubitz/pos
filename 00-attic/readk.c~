@@ -1,0 +1,13 @@
+/*
+* pOS
+* readk.c
+* feb., 12 2001
+*/
+
+#include <kernel.h>
+#include <asm/io.h>
+
+void __readk (void * buffer, WORD size) {
+
+
+}

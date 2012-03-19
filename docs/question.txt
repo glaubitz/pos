@@ -1,0 +1,145 @@
+pOS - portable Operating System
+Still Questions
+05/06/03
+
+
+0. IMPORTANT: What for do I use kernel.h include ???
+- because we use the pos.c library that contains a
+   list of function pointers set to the kernel symbols
+   preceded with "__"
+
+1. How to manage to use more than one fs at a time ?
+
+	- see /linux/include/linux/fs.h !
+	
+	- we must implement a "mount" and "umount" commands
+	  to mount/unmount a device using a specified fs,
+	  the kernel would then store a pointer to a fs
+	  access struct containing pointers to all fs
+	  functions
+
+	- smallest chunks in linux fs's are called inodes,
+	  this struct contains an union (yes !) with space
+	  for all supported filesystem-structs
+
+
+2. How integrate the bios-code into kernel (boot.c instead of boot.S->inline asm ?) ?
+   A. BIOS compiled into kernel: kernel build is not portable
+   B. BIOS external, kernel accesses via system.map
+
+   A would be better: more compact, BIOS is guaranteed to be latest:
+
+   compile bios.S with luna, link with lld to *.obj from kernel
+
+   OR
+
+   integrate all code for hardware i/o into kernel
+   (linux-like)
+
+  - there's no bios code anymore, we now use drivers and some
+    few arch-specific code (entry.s, boot.s), so this question
+    is obsolete and thus irrelevant
+
+3. There is a concept missing how to manage disk (pfs).
+   - yes, as of 05/06/03 there's still no native filesystem,
+     but first kernel versions will presumably use
+     an existing filesystem like minix etc
+
+4. How to enable convenient kernel configuration ?
+   - at first config.h in pos/include will be edited
+     manually, later there will be configuration
+     tool allowing convinient configuration
+     (see config.txt)
+
+5. How to manage the problem with differnt compilers on different CPU's
+   having different sizes for all types (int, long etc) ?
+   - we do not use the types directly, but rather define the
+     required types (BYTE, WORD, DWORD etc) from the original
+     types, e.g.: #define BYTE unsigned char
+     (not anymore, I don't like these #define-declarations,
+      they remind me too much of Micro$oft code)
+
+6. How at all does Linux I/O Subsystem work, what drivers does Linux
+   bring for HDD/FDD I/O, does it replace BIOS completely ?
+
+   - linux does replace almost all i/o drivers for serial,
+     ide/scsi, except for vesa bios and apm
+
+   linux is layered as follows:
+
+   kernel
+	  |
+	  --> driver
+	         |
+                 --> system related assembler code as macros (include/asm/*.*) (e.g."out", "in" on x86)
+
+7. How does Linux process the "system.map" file, which sub-routines are listed
+   there, is this list created at link time ?
+
+   - the file is created at link time (by the linker), it is obsolete and a holdover from older
+     kernel versions, it is still created for old linux applications compatibility
+
+8. Does Linux take advantage of the protected mode architecture of i386 ?
+   If yes, does 68k support protected mode, if no, how is the system
+   protected from illegal memory accesses ?
+
+  Of course it does !! Indeed the 68k series also have protected
+  modes.
+
+9. There is still the global problem unanswered how "char *" is
+   treated by any compiler (MSVC: "It is a very special, const type")
+
+   - "char *" is a constant pointer to char, right, it can be
+     initialized with a constant (!) string, but not with
+     a volatile string (i.e. user input), we have to use
+     malloc () to allocate memory for dynamic strings
+     (who the hell asked such stupid newbie-question ???)
+
+10. Have another look at the 1541 file system, max # of sectors, tracks, heads
+
+11. In what language is the linux mem-management written (speed issue, 
+    portability, c vs asm) ?
+
+	- in C
+
+12. How does the printf function work (VAR ARG !) ?
+   - there is a variable va_alist of type va_list
+     automatically, internally defined by the compiler,
+     it stores the address to the function parameters
+     and these are accessed through a set of macros
+     (va_start, va_arg, va_end ...)
+     see /usr/include/vararg.h for more information
+
+13. Is UART 8250 register compatible with 16550 ?
+
+14. How to call sysinit code as entry code with the code
+    being the first part in the binary kernel image like
+    depicted here:
+
+	-----------------
+	| Sysinit	| $0002 (on C64)
+	|		|
+	-----------------
+	| other Kernel	|
+	| code		|
+	-----------------
+
+    - just specify the entry object code as
+      first object in the object list
+
+15. What is the difference between an idle status and an sleeping
+    status of a process ???
+    - interesting question, I don't know actually :), is there
+      really an "idle"-status ???? (I only know right now from
+      an "sleeping"-status)
+
+16. why does Lunix interpret ESCAPE codes after "sh" has been
+    started but "init" does interpret these codes, i thought
+    that the escape codes are interpreted by "console.s" that is
+    internal to the kernal (same goes for Linux)
+
+To answer these questions...
+
+...check out the Linux kernel source
+...check out the LUnix kernel source
+...check out some DO$/Window$ resources

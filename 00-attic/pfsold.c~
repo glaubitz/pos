@@ -1,0 +1,41 @@
+/*
+* pfs.c - portable File System
+* dec., 06 2000
+*/
+
+#include <pos.h>
+
+
+HFILE	createfile (BYTE drive, char * filename,
+					WORD ATTRIBUTES) {
+	HFILE hFile;
+
+	return hFile;
+};
+
+
+bool	readfile (HFILE file, BYTE buffer []) {
+
+	return FALSE;
+}
+
+bool	writefile (HFILE file, BYTE buffer []) {
+
+	return FALSE;
+}
+
+bool	deletefile (HFILE file) {
+
+	return FALSE;
+}
+
+bool	renamefile (HFILE file, char * newname) {
+
+	return FALSE;
+}
+
+bool	initdisk (BYTE drive) {
+
+
+	return FALSE;
+}

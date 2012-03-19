@@ -1,0 +1,53 @@
+pOS FileSystem Interface, v0.0.1
+12/06/02
+
+NOTE: this information might be already
+      obsolete as there's no good
+      fs-api yet, thus the real code
+      might change often.
+      --> as of 12/06/02 we now have
+      a basic filesystem conpect,
+      see /document/vfs.txtm, but this
+      information might still not
+      be completely obsolete as VFS
+      also needs some underlying layer
+      for device management
+
+The kernel can dynamically mount and
+unmount block devices into its file-
+system. To store information about the
+filesystem used and its specific functions
+the kernel provides a MOUNTINFO struct
+that stores all that data. When configuring
+the kernel the constant __MAX_NBLOCKDEV must
+be set so that the kernel can reserve enough
+memory to store information on all block
+devices when they are mounted. Thus there
+are always as many MOUNTINFO structs as there
+are block devices. (As of 09/02/2002 this
+is not true anymore, there can be more
+block devices than available MOUNTINFO
+structs, thus we can have 5 block devices
+but can only mount 3 at the same time
+(when MAX_NMOUNTED is set 3 and
+MAX_NBLOCKDEV is set 5).
+
+The MOUNTINFO struct has the following structure:
+
+typedef struct __MOUNTINFO {
+
+	BYTE fstype; /* a unique identifier for each
+					filesystem, with this information
+					a process may retrieve the infor-
+					mation about the type of filesystem */
+	
+	union fsstruct { /* a union with a pointer to a struct
+						of the filesystem mounted */
+
+		struct * 1541fs_struct;
+		struct * pfs_struct;
+	}
+
+	FILEINFO (__createfile *) (char * filename, WORD attr);
+
+};

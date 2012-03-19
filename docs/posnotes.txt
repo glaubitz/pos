@@ -1,0 +1,11 @@
+pOS-Notes - 02/14/03
+
+MAIN-TODO:
+
+- itoa
+- atoi
+- PCL - portable C-Library (math.c, string.c, io.c etc.)
+- PGL - portable Graphics Library (circle, line, rectangle etc.)
+- scheduler-concept
+- delay-concept
+- PFS-concept

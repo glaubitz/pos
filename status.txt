@@ -1,0 +1,28 @@
+pOS Kernel status - 12/19/04
+
+Part				Complete	Lacks what ?
+-----------------------------------------------------------------------------------------------
+Filesystem Interface		60 %		code implementation (design complete)
+Scheduler			40 %		code implementation (design almost complete), design refining
+Memory Management		98 %		bug tracking, more tidyness (maybe mm is gonna rewritten - page-oriented)
+Boot Loader			100 %		nothing (only cosmetics and code adaptions)
+Process Management		50 %		file loading mechanisms, has lots of bugs
+Device and Driver API		95 %		small design changes, code corrections
+System Time Function		95 %		debugging
+Console Driver			65 %		currently console output only (buggy), no input
+Block Device Driver		 0 %		absolutely no idea how to contact 1541 :(, will be provisorical driver
+Signals				10 %		only simple concept
+Helper Libraries		70 %		simply to lazy to go on (concept is there)
+
+and additionally the kernel probably has dozens of bugs (except for the bootloader strip
+which has been tested to work perfectly :) )
+
+Remaining design-todo:
+
+- Scheduler refinements
+- possible mm redesign
+- device-files i/o (data written,
+  update-flag etc)
+- cheat driver for 1541 block device to use
+  1541-DOS to access filesystem to speed-up
+  disk access on C64)

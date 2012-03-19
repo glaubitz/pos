@@ -1,0 +1,42 @@
+pOS - portable Operating System
+05/06/03
+
+Memory management in pOS kernel, version 0.0.1
+
+The memory management in this first kernel release
+is quite simple but very efficent by having a small
+overhead. The memory is allocated in dynamically sized
+blocks that have the following structure:
+
+        ----------------- Offset
+        | PID of Owner  | 0x00
+        -----------------
+        | Size in bytes | 0x01
+        -----------------
+        |               | 0x03 (0x05)
+        | Memory space  |
+        |               |
+       -------------------
+       -------------------
+        |               |
+        -----------------
+
+The first byte of the memory block contains the PID of the
+process owning the block, this is the process the memory
+block was allocated by (on process-load). If the PID
+is '254', the block is free, if it is '255' the block has
+been reserved by a process for dynamic memory block resizing
+(remalloc). Reserved memory blocks will be used for allocating
+(malloc) when there is not enough contigious memory free. The
+next member variable determines the size in byte of the following
+memory space. The rest of the block is the memory space whose
+adress is returned by the malloc() kernel function.
+
+The memory block header is defined in the s_mem struct:
+
+	struct s_mem {
+
+		unsigned char pid;	
+		unsigned long size;
+
+	};

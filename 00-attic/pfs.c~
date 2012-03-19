@@ -1,0 +1,64 @@
+/*
+* pfs.c
+* portable File System
+* dec., 13 2000
+*/
+
+// there is still the global problem unanswered how "char *" is
+// treated by any compiler (MSVC: "It is a very special, const type")
+
+#include <pos.h> // includes all low-level disk routines, from bios.c(.S ?)
+#include <fs/pfs.h>
+
+typedef struct _HFILE { // general file handle, all fs
+
+        char * filename; // pointer to a filename string
+        WORD bytesdone; // bytes read or written
+        WORD bytesleft; // bytes left to read, 0 if writing (or freedisk space)
+        void * fsstruct; // pointer to fs information struct (i.e PFSENTRY)
+
+} * HFILE;
+
+
+typedef struct _PFSENTRY {
+
+        char * filename;
+        WORD sector;
+        WORD track;
+        WORD head;
+
+} * PFSENTRY;
+
+bool createfile (HFILE file, BYTE openmode) {
+
+        int sector, track, head;
+        char * filename = file->filename;
+        getdiskparams (x, y,... , file->drive);
+        // lastsector = from diskparams
+        PFSENTRY buffer [SIZE_OF_DIRECTORY];
+
+        while (sector < END_OF_DIRECTORY) {
+
+                readsector (..., (BYTE) buffer [sector]);
+        };
+
+        while (int i < sizeof [buffer]/sizeof PFSENTRY) {
+
+                if (PFSENTRY->filename == file->filename) {
+                        sector = PFSENTRY->sector;
+                        track = PFSENTRY->track;
+                        head = PFSENTRY->head;
+                        return TRUE;
+                }
+                i++;
+		// put error code on a process specific stack ?
+        
+        }
+        file->fsstruct = (void *) <PFSENTRY> pfsentry;
+        if (openmode == READONLY)
+	        return FALSE;
+	if (openmode == WRITE)
+		// if file exists, exit;
+	if (openmode == OVERWRITE)
+		// do anything and fill out handle;
+}

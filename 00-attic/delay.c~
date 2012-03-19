@@ -1,0 +1,21 @@
+/*
+ * pOS
+ * delay.c - routines for the delay loop
+ * 03/06/03
+ */
+
+#include <kernel.h>
+#include <ASM/delay.h>
+
+void k_initdelay (unsigned char machineid) { // retrieving arch-type over param
+					// is stupid, rather use
+					// info from <config.h>
+
+	// initialize delayloop for particular machine
+
+}
+
+void k_delay50us () {
+
+        m_delay50us;
+}

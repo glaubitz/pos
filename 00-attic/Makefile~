@@ -1,0 +1,51 @@
+# pOS
+# main Makefile
+# 12/11/01
+
+ARCH= c64
+AS= ca65
+ASFLAGS=
+CC= cc65
+CCFLAGS=
+LD= ld65
+LDFLAGS= -tc64
+
+all: tools boot kernel pos.lib
+
+kernel: entry.o kernel.o drivers.o fs.o lib.o
+	$(LD) $(LDFLAGS) arch/$(ARCH)/entry.o \
+	kernel/kernel.o \
+	drivers/drivers.o \
+	fs/fs.o \
+	lib/lib.o \
+	-o kernel -m kernel.map
+	tools/map2inc kernel.map include/ksyms.h
+
+tools:
+	make -C tools
+
+boot entry.o:
+	make -C arch/$(ARCH)
+
+pos.lib: tools kernel
+	make -C lib pos.lib
+
+kernel.o:
+	make -C kernel
+
+drivers.o:
+	make -C drivers
+
+fs.o:
+	make -C fs
+
+lib.o:
+	make -C lib
+
+clean:
+	make -C arch/$(ARCH) clean
+	make -C kernel clean
+	make -C drivers clean
+	make -C tools clean
+	make -C lib clean
+	make -C fs clean

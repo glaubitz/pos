@@ -1,0 +1,160 @@
+;
+; pOS Boot Loader - C64
+; Version 0.0.5
+; date: may, 24 2001
+;
+; history:
+;
+; 0.0.1, 01/26/01: initial release, not runnable
+; 0.0.2, 03/23/01: dozens of bugs fixed, should work now
+; 0.0.3, 04/12/01: added boot message for kernel loading
+; 0.0.4, 05/23/01: fixed EVERYTHING, finally works
+; 0.0.5, 05/24/01: fixed wrong error message (disk error) when image not found
+
+	.org $0801 ; set to start of BASIC buffer
+	
+; <adress next line lo, hi>,<line number lo, hi>,"SYS",<Space>,"2","0","6","2",<end of line>, <adress next lo, hi>
+	.byte $0c, $08, $01, $00, $9e, $20, $32, $30, $36, $32, $00, $00, $00
+
+; loader entry point
+
+	ldx #<loaderinfo
+	ldy #>loaderinfo
+	jsr stdout ; output kernel info
+
+	ldx #<bootmsg
+	ldy #>bootmsg
+	jsr stdout
+
+	ldx #<kernelname ; set kernel image file name
+	ldy #>kernelname
+	lda #$06 ; this routine needs string length in accu
+	jsr $ffbd ; SETNAM
+
+	lda #$01 ; logical file number 1
+	ldx #$08 ; drive 8
+	ldy #$00 ; secondary adress 0
+	jsr $ffba ; SETLFS
+	
+	lda #$00
+;	sta $0a ; load flag, must be set ???
+	ldx #$00 ; target adress lo-byte
+	ldy #$c0 ; target adress hi-byte
+	jsr $ffd5 ; LOAD
+
+	bcc kernel ; when carry clear->success
+
+	ldx #<msgfail
+	ldy #>msgfail
+	jsr stdout
+	
+	lda #$00
+	jsr $ffbd ; SETNAM & SETLFS MUST ALWAYS BE CALLED BEFORE OPEN
+	
+	lda #$0f ; LFN 15
+	ldx #$08 ; drive 8
+	ldy #$0f ; SECA 15
+	jsr $ffba ; SETLFS
+	
+	jsr $ffc0 ; OPEN
+
+	ldx #$0f ; LFN 15
+	jsr $ffc6 ; input from logical file 15
+
+	jsr $ffcf ; get first character
+	sta $fd ; as ASCII Code
+	jsr $ffcf
+	sta $fe
+
+	jsr $ffcc ; change to std. output
+
+	lda #$0f ; LFN 15
+	jsr $ffc3 ; close floppy channel 15
+	
+	jsr checkerror ; retrieves errorcode in accu
+	cmp #$01 ; file not found ?
+	bne diskpanic ; no, then we have a disk problem
+	
+	ldx #<errors
+	ldy #>errors
+	jsr stdout
+	rts ; leave to basic
+
+kernel:
+	
+	ldx #<msgok
+	ldy #>msgok
+	jsr stdout
+
+	jmp $c000
+
+diskpanic:
+
+	ldx #<(errors + 26) ; the first error string is 26 bytes long
+	ldy #>(errors + 26)
+	jsr stdout
+	rts
+
+;textadress:
+;	.byte $00, $00
+
+stdout:
+
+	stx $fb
+	sty $fc
+	ldy #$00
+ B:	lda ($fb), y ; lda (op),y works with zp-ops only
+	cmp #$00
+	beq F
+	jsr $ffd2
+	iny
+	cpy #$ff
+	bne B
+ F:	rts
+
+checkerror:
+
+	lda $fd
+	cmp #$36 ; ASCII '6'
+	bne diskerror
+	lda $fe
+	cmp #$32 ; ASCII '2'
+	bne diskerror
+	lda #$01 ; "62, FILE NOT FOUND"
+	rts
+
+diskerror:
+	
+	lda #$02 ; disk error
+	rts
+
+loaderinfo:
+	.text	$0d, "KERNEL BOOT LOADER C64", $0d
+	.text	"(C) 2000-2001 A.GLAUBITZ", $0d
+	.text	"VERSION 0.0.5", $0d
+	.text	"DATE: MAY, 24 2001", $0d
+	.byte	$00
+
+;errorcode:
+;	.byte	$00, $00
+
+bootmsg:
+	.text	$0d, "TRYING TO LOAD KERNEL "
+	.byte	$00
+
+msgok:
+	.text	"[OK]"
+	.byte	$0d, $00
+
+msgfail:
+	.text	"[FAILED]"
+	.byte	$0d, $00
+
+errors:
+	.text	"(KERNEL IMAGE NOT FOUND)"
+	.byte	$0d, $00
+	.text	"(DISK ERROR)"
+	.byte	$0d, $00
+
+kernelname:
+	.text	"KERNEL"

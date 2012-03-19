@@ -1,0 +1,128 @@
+pOS - portable Operating System, v0.0.1
+VFS - the Virtual FileSystem
+2nd Revision - 01/25/03
+--------------------------------------------------------------
+
+This new filesystem concept is inspired by the standard file
+system hierarchies used in Unix systems like Linux. It super-
+cedes the current concept which differentiates files from
+devices. The new filesystem lists all files and devices
+in a common file struct.
+
+First of all, an overview of the VFS components and their interfaces:
+
+
+                |----------------|
+                |    PROCESS     |
+                |----------------|
+                        |
+                        | casts file i/o-request
+                        | over OpenFile, ReadFile etc.
+                        \/
+                |----------------|           |----------------|              |----------------|
+                |      VFS       |           |   FS-Library   |              |   Device-File  |
+                |                |           |                |              |                |
+                | k_open ()      | redirect  | <fs>_open ()   | k_isdevice ()| k_devopen ()   |
+                | k_close ()     |  request  | <fs>_close ()  | == -1        | k_devclose ()  |
+                | k_read ()      |---------->| <fs>_read ()   |------------->| k_devread ()   |
+                | k_write ()     |           | <fs>_write ()  |              | k_devwrite ()  |
+                | k_remove ()    |           | <fs>_remove () |              | k_devremove () |
+                | k_rename ()    |           | <fs>_rename () |              | k_devrename () |
+		| k_find ()      |           | <fs>_find ()   |              | k_devfind ()   |
+		|----------------|           |----------------|              |----------------|
+                       /\       		     |		                     |
+                       |  k_isdevice () == 0         |  			     | request i/o
+                       -------------------------------                      	     |
+		       								     \/
+                        				                     |----------------|
+				                                     read/   | Device-Driver  |
+				                 |----------------|  write   |   readblocks   |
+				                 |     DEVICE     |<---------|   writeblocks  |
+				                 |----------------|          |   getchars     |
+                                				             |   putchars     |
+				                                             |----------------|
+
+
+Now comes a detailed description what each of the elements of
+the filesystem chain does:
+
+1. Process:
+   Calls functions OpenFile, ReadFile, WriteFile, CloseFile,
+   RenameFile, DeleteFile etc to request the respective
+   filesystem operation. The process passes a filename
+   to these functions, e.g. /files/file01
+
+2. VFS:
+   VFS first tries to determine the filesystem and the respective
+   device of the requested file by parsing the string-type filename:
+
+        LOOP:
+        - determine filesystem of parent directory through memory mountlist
+          - success goto ENDLOOP
+          - failure
+            - if parent folder = "/" (root), then VFS returns error
+              as it could not determine the files FS, possible
+              error is an invalid filename or the device not
+              been mounted
+            - if parent folder is not = "/" goto LOOP
+        - try to call the requested i/o functions in the corresponding
+          filesystem library with filename and device as parameter
+
+3. Filesystem:
+   Performs the requested filesystem operation and returns an error
+   status to VFS. The filesystem determines over the mountlist to
+   which device-file or file it is mounted to and opens the corresponding
+   file in VFS via k_open (). VFS again sends the request to the
+   corresponding filesystem-library. The filesystem must check
+   the whether the requested file is device-file by calling
+   k_isdevice (), if this function returns true, the filesystem
+   must call the corresponding filesystem-operation from the
+   virtual device filesystem to perform the device i/o.
+
+3a. Virtual Device File:
+   Allows to access devices as regular files.
+   
+4. Driver:
+   Send direct i/o-requests to the respective device. Must also
+   return error status but to filesystem-library. This part
+   of the filesystem-chain is machine-dependent.
+
+5. Device:
+   Performs requested i/o-operations and also returns error status.
+
+A note on loopback devices (or mounting a file instead of a device):
+
+The 2nd revision of VFS automagically implements support for loop
+devices due to it's system design. Simply mount a filesystem from
+an image file and specify the filesystem type. The only difference
+between filesystems on loop-devices and normal devices is that
+the parts 2. & 3. of the VFS mechanism is run through 4 times
+instead of 2.
+
+A note on direct device access:
+
+Sometimes a process needs to access a storage device directly
+for maintenance. This can be for formatting, partitioning,
+defragmenting a disk or simply for writing a disk-image
+directly to disk. The 2nd revision of VFS implements
+direct device access through the virtual device files,
+which do not physically exist on the disk. The devices
+are accessed through the /dev-directory which contains
+all virtual device files for all supported devices.
+For instance accessing the block-device 0, a process
+simply needs to open the file "/dev/block0".
+
+A note on the mountlist:
+
+The mountlist is an array of type MNTINFO and is a member
+of the k_kernel-struct. The mountlist contains a target-
+path and a source-path and an integer variable which
+determines the filesystem-type:
+
+typedef struct _MNTINFO {
+
+	char [__MAX_VFSPATHLENGTH] targetpath;
+	char [__MAX_VFSPATHLENGTH] sourcepath;
+	int fstype;
+
+} MNTINFO;

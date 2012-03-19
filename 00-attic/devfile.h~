@@ -1,0 +1,10 @@
+/*
+ * DEVFILE.H
+ * virtual device files 
+ * 02/25/03
+ */
+
+struct s_fsdevfile {
+
+	struct s_device * device;
+}

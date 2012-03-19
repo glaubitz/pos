@@ -1,0 +1,128 @@
+/*
+* types.h
+* 03/26/02
+* pOS standard types
+*/
+
+#ifndef __TYPES_H
+#define __TYPES_H
+
+#ifdef  __16BITMEM
+#define BYTE   unsigned char
+#define WORD   unsigned int
+#define DWORD  unsigned long
+#define MEMVAR WORD
+#define BOOL BYTE
+#elif  defined (__32BITMEM)
+#define BYTE   unsigned char
+#define WORD   unsigned short
+#define DWORD  unsigned int
+#define MEMVAR DWORD
+#define BOOL DWORD
+#endif
+#endif
+
+#define NULL ((void *) 0)
+#define TRUE -1
+#define FALSE 0
+
+typedef SIGNALPROC void (*) (void);
+typedef IRQPROC void (*) (void);
+
+typedef struct __TIMEINFO {
+
+	BYTE	hours;
+	BYTE	minutes;
+	BYTE	seconds;
+
+} TIMEINFO;
+
+typedef struct __MEMBINFO {
+
+	BYTE	pid;
+	MEMVAR	size;
+
+} MEMBINFO;
+
+typedef struct __DEVINFO {
+
+	char devname [8];  // shall we use this for the driver
+			// or the dev-string in the kernel ??
+	BYTE owner;
+	BYTE type;
+
+	/* user defined device functions
+		may be added to these unions */
+
+	// hmm.. i think we should provide more space for
+        // functions pointers	
+
+	union {
+		BYTE (* putc) (char c);
+		DWORD (* readblock) (BYTE * buffer, WORD nbytes);
+	};
+
+	union {
+		char (* getc) ();
+		DWORD (* writeblock) (BYTE * buffer, WORD nbytes);
+	};
+
+
+	DWORD (* init) ();
+	DWORD (* exit) ();
+
+} DEVINFO;
+
+typedef struct __FILEINFO {
+
+        DWORD   offset;
+        DWORD   size;
+        WORD    flags;
+
+        MOUNTINFO * mounted;
+        char    filename [16];
+
+} FILEINFO;
+
+typedef struct __PROCINFO {
+
+	BYTE pid;
+	BYTE ppid;
+	BYTE priority; // 1...9 = factor for currentttl
+	BYTE lasterror;
+	SIGNALPROC signals [5];
+
+} PROCINFO;
+
+typedef struct __TASKINFO {
+
+	TASKENV taskenv;
+	void * heap;
+	BYTE tid;
+	PROCINFO * owner; // to access data in the owner's proc struct
+
+} TASKINFO;
+
+typedef struct __MOUNTINFO {
+
+        BYTE fs_type;
+        DEVINFO * device;
+
+	union {
+
+		void (* 1541fs_read) (BYTE buffer, DWORD offset, DWORD count);
+	};
+
+	union {
+
+		void (* 1541fs_write) (BYTE buffer, DWORD offset, DWORD count);
+	};
+
+        union {
+
+			1541fs_struct 1541fs;
+        };
+
+} MOUNTINFO;
+
+#endif

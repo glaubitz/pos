@@ -1,0 +1,42 @@
+/*
+* directfs.c
+* direct filesystem
+* 01/14/03
+*/
+
+#include <kernel.h>
+
+FILEINFO * directfs_openfile (char * relpath, int mode) {
+
+	FILEINFO file;
+	DIRECTFSSTRUCT directfsstruct;
+	int i;
+	
+	/* this routine will only accept filenames,
+	 * not paths, though the paramter is named
+	 * "relpath"; it evaluates the filename
+	 * to determine which of the sub-devices
+	 * was meant; if the filename and the mode
+	 * is valid for the device-driver, the routine
+	 * returns a pointer to FILEINFO-struct
+	 */
+
+	file.filename [c_MAX_VFSPATHLENGTH];
+	file.size = 0; // the block-device driver should provide a size of its disk
+	file.pfsstruct = &directfsstruct; // this is only meant symbollically
+	
+	// determine index of respective mountentry in mountlist
+	
+	file.mountinfo = &k_kernel.mountlist [i];
+
+	return file;
+}
+
+MEMVAR directfs_readfile (FILEINFO * file, void * buffer, MEMVAR nbytes) {
+
+}
+
+MEMVAR directfs_writefile (FILEINFO * file, void * buffer, MEMVAR nbytes) {
+
+}
+

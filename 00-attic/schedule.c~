@@ -1,0 +1,117 @@
+/*
+* pOS
+* schedule.c
+* 08/30/02
+*/
+
+// This is garbage and need's a total redesign !!! (No real update since about 2001)
+
+#include <kernel.h>
+#include <asm/schedule.h>
+#ifdef OPT_RELOCATE
+#include <asm/relocate.h>
+#endif
+
+TASKINFO * k_addtask (void * heap, PROCINFO * owner) {
+
+	TASKINFO * task;
+	BYTE tid;
+
+	MEMVAR i;
+
+        if (k_kernel.ntasks == c_MAX_NTASKS) {
+		
+                k_setlasterror (c_MSG_MAX_NTASKS_REACHED);
+		return NULL;
+	}
+
+	if (!heap || !owner) {
+
+                k_setlasterror (c_MSG_ILLEGAL_PARAMETER);
+		return NULL;
+	}
+
+#ifdef OPT_RELOCATE
+
+        m_relocate(heap);
+#endif
+
+        task = &k_kernel.tasks [k_kernel.ntasks];
+
+        if (k_kernel.lastfreetid == 0) {
+                for (tid = 0; tid < c_MAX_NTASKS; tid++) {
+
+                        for (i = 0; i < k_kernel.ntasks; i++)
+                                if (k_kernel.tasks [i].tid == tid)
+					break;
+
+                        if (i == k_kernel.ntasks) { // no match found -> tid is free
+
+				task->tid = tid;
+				break;
+			}
+		}
+	}
+	else {
+			
+                task->tid = k_kernel.lastfreetid;
+                k_kernel.lastfreetid = 0;
+	}
+
+	task->owner = owner;
+        task->taskenv = k_inittaskenv;
+	
+        k_lock; // a task switch would be fatal now ??
+
+        k_kernel.ntasks++;
+
+        k_unlock; // okay, now we can go back to normal business
+
+	return task;
+}
+
+void k_removetask (TASKINFO * task) {
+
+        k_lock;
+        k_free (task->heap);
+	
+
+        k_kernel.ntasks--;
+        k_kernel.lastfreetid = task->tid;
+        * task = k_kernel.tasks [k_kernel.ntasks];
+
+        k_unlock;
+}
+
+void k_schedule () {
+
+	/* how can we be sure that the following if-clause won't affect
+		the stack on any machine ?: it should not, when considering
+		the assembly code on 65xx and x86 machines:
+
+                65xx: lda $k_kernel.current_ttl; cmp #$00; beq do_dec
+
+                x86: mov ax, k_kernel.current_ttl; cmp ax, 00; jz do_dec
+	*/
+
+        if (k_kernel.current_ttl != 0) {
+                k_kernel.current_ttl--;
+		return;
+	}
+
+	/* assumes call during lock */
+
+        m_saveenv;
+
+        k_kernel.icurrent++;
+
+        if (k_kernel.icurrent == k_kernel.ntasks)
+                k_kernel.icurrent = 0;
+
+        k_kernel.current = &(k_kernel.tasks [k_kernel.icurrent]);
+
+        k_kernel.current_ttl = k_kernel.current->owner->priority * PROCMINTTL;
+
+        m_loadenv; /* load new cpu environment, MUST BE LAST HERE */
+}
+

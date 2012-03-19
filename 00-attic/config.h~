@@ -1,0 +1,16 @@
+/*
+* config.h
+* (c) Adrian Glaubitz
+* dec., 12 2000
+*/
+
+#define  C64
+#define  PFS
+
+#ifdef C64
+#define MEM16
+#endif
+
+#ifdef PFS
+#define FS_C "fs/pfs/pfs.c" // check out LUNIX makefile on this issue
+#endif

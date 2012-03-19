@@ -1,0 +1,48 @@
+/*
+* const.h
+* 03/26/02
+* system wide constants
+*/
+
+#ifndef __CONST_H
+#define __CONST_H
+
+/* process messages */
+
+#define	__MSG_NO_ERROR		0x00
+#define __MSG_OUT_OF_MEM	0x01
+#define __MSG_ACCESS_VIOLATION  0x02
+#define __MSG_FILE_NOT_FOUND    0x03
+#define __MSG_ILLEGAL_FILENAME  0x04
+#define __MSG_FILE_READ_ONLY    0x05
+#define __MSG_ILLEGAL_PARAMETER 0x06
+#define __MSG_UNKNOWN_PROCESS   0x07
+#define __MSG_UNKNOWN_TASK      0x08
+#define __MSG_MAX_NPROCS_REACHED 0x09
+#define __MSG_MAX_NTASKS_REACHED 0x0a
+#define __MSG_DEVICE_BUSY        0x0b
+#define __MSG_UNKNOWN_SIGNAL     0x0c
+
+/* strings */
+
+#define __STR_KERNEL_VERSION    "0.0.1"
+#define __STR_KERNEL_COPYRIGHT  "(C) A.GLAUBITZ 2000-2002"
+
+/* device types */
+
+#define __DEVICE_CHAR		0x00
+#define __DEVICE_BLOCK		0x01
+
+/* other */
+
+#define __PID_FREE	254 // the PIDs 254 and 255 are used to identify free/reserved memory blocks
+#define __PID_RESERVED	255
+// #define	__PIDKERNEL	255 // the kernel has its own PID to reserve memory and for other (future) use
+#define __PROCMINTTL 50 // minimum time to live for any task
+#define __MAX_NPROCS 10
+#define __MAX_NTASKS 20
+#define __MAX_NMOUNTED 2
+#define __MAX_NBDEVICE 2
+#define __MAX_NCDEVICE 2
+#define __MAX_NIRQPROC 4
+#endif

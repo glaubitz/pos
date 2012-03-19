@@ -1,0 +1,101 @@
+/*
+* bios.h
+* commodore 64
+* basic input output system
+* dec., 06 2000
+*/
+
+/* how to manage the following when these types are defined in pos.h once ? */
+
+typedef	WORD;
+typedef	BYTE;
+typedef struct _DISKPARAM DISKPARAM;
+
+#define	BIOSJMP		0x0000 /* adress of bios jump table here = bios load adress */
+
+bool	readsector (WORD cyl, WORD head, WORD sector,
+					BYTE buffer [], BYTE drive) {
+	asm {
+		
+		lda	>cyl
+		pha
+		lda <cyl
+		pha
+		lda >sector
+		pha
+		lda <sector
+		pha
+		lda <#buffer
+		pha
+		lda >#buffer
+		pha
+		lda driveid
+		pha
+
+		jsr BIOSJMP + x
+	}
+}
+
+bool	writesector (WORD cyl, WORD head, WORD sector,
+					 BYTE buffer [], BYTE drive) {
+	asm {
+		
+		lda	>cyl
+		pha
+		lda <cyl
+		pha
+		lda >sector
+		pha
+		lda <sector
+		pha
+		lda <#buffer
+		pha
+		lda >#buffer
+		pha
+		lda driveid
+		pha
+
+		jsr BIOSJMP + x
+
+	}
+			
+}
+
+bool	getdiskparam (DISKPARAM * diskparam, BYTE drive) {
+
+	asm {
+
+		lda >#diskparam
+		pha
+		lda <#diskparam
+		pha
+		lda drive
+		pha
+
+		jsr BIOSJMP + x
+
+	}
+}
+
+bool    printc  (char c) {
+
+	asm {
+
+		lda c
+		pha
+		jsr BIOSJMP + x
+	}
+}
+
+char	getchar () {
+
+	char c = '\0';
+	asm {
+
+		jsr BIOSJMP + x
+		pla
+		sta c
+	}
+
+	return c;
+}

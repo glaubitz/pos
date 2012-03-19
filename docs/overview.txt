@@ -1,0 +1,97 @@
+pOS - portable Operating System
+
+A first concept
+by Adrian Glaubitz
+
+filenames ending with ~ are obsolete
+
+/pos
+	/arch
+                /c64
+                        /bios.S~ (or bios.c when compiled into kernel)
+                        /boot.S
+                        /c64.h
+                        /entry.S
+	/fs
+                /1541fs
+                        /1541fs.c
+                /pfs
+                        /pfs.c
+                /pipe.c
+	/include
+                /lib
+                        /cfgfile.h
+                        /string.h
+                /kernel.h
+                /pos.h
+	/lib
+                /cfgfile.c
+                /pos.c
+                /string.c
+	/kernel
+                /init
+                        /init.c
+                /sysinit.c
+                /nmi.c
+                /irq.c
+                /mem.c
+                /relocate.c
+                /process.c
+                /schedule.c
+                /hook.c
+                /printk.c
+                /readk.c
+                /instance.c
+
+bios.S~ - contains basic system specific routines
+		(disk: readbyte, writebyte, video: printc,
+		 keyboard: getchar, ...)
+
+boot.S - contains the system specific boot loader
+
+entry.S - machine-specific startup code (vector setup etc.)
+
+pfs.c -	a very simple file system (portable file system)
+
+1541fs.c - vc-1541 floppy disk file system
+
+init.c - a small program that initializizes the computer,
+		that is loads user programs, changes console
+		color, loads a shell, ..., comes with a con-
+		figuration-file (init.config)
+
+cfgfile.c - 	routines that help to store data in config
+		(plain-text) files
+
+pos.c - portable Operating System static library, needs to
+		be linked to any pOS application
+
+string.c - 	a simple string library
+
+sysinit.c -	kernel routines that are run at startup,
+		these are non-machine specfic
+
+nmi.c - code for the NMI-handler
+
+irq.c -	code for the IRQ-handler
+
+mem.c -	memory management, allocation, freeing
+
+relocate.c - routines to relocate code from its original
+		(compiled) base adress to a new base adress
+		in memory (old computers don't have virtual
+		memory support)
+
+process.c -  code for the process management
+
+schedule.c - the process scheduler routines
+
+hook.c - functions to hook and unhook the maskable irq
+
+pipe.c - functions for establishing pipes and destroying them
+
+instance.c - structs with data about current kernel instance
+
+readk.c - readk reads character from keyboard
+
+printk.c - prinkt print charater to console

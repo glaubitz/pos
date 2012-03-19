@@ -1,0 +1,68 @@
+/*
+* pOS
+* hook.c
+* apr., 20 2001
+*/
+
+#include <kernel.h>
+
+HOOKINFO * __registerhook ((void *) hookproc) {
+
+	
+	if (__kernel.nhooks == MAX_NHOOKS) {
+		
+		__setlasterror (__MSG_MAX_NHOOKS_REACHED);
+		return FALSE;
+	}
+	
+	if (!__kernel.hooks = __remalloc (__kernel.hooks, (__kernel.nhooks + 1) * sizeof (HOOKINFO))) {
+
+		// __setlasterror (__MSG_OUT_OF_MEM); // done by __remalloc
+		return FALSE;
+	}
+
+	HOOKINFO hook;
+
+	hook.callback = hookproc;
+
+	hook.pid = __kernel.current->owner->pid;
+
+	__kernel.hooks [__kernel.nhooks] = hook;
+
+	__kernel.nhooks++;
+
+	return hook;
+}
+
+BOOL __unregisterhook (HOOKINFO * hook) {
+
+
+	WORD i = 0;
+
+	for (i = 0; i < __kernel.nhooks; i++)
+
+		if (&(__kernel.hooks[i]) == hook) {
+
+			__kernel.nhooks--;
+
+			if (__kernel.nhooks != 0) {
+
+				__kernel.hooks[i] = __kernel.hooks[__kernel.nhooks];
+				__remalloc (__kernel.nhooks, (__kernel.nhooks) * sizeof (HOOKINFO));
+
+				return TRUE;
+			}
+
+			else {
+					__free (__kernel.hooks);
+
+					return TRUE;
+			}
+		};
+
+	__setlasterror (__MSG_UNKNOWN_HOOK);
+
+
+	return FALSE;
+
+}

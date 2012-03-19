@@ -1,0 +1,85 @@
+Concept for VFS directory search in dcache (finally :))
+>> sorry for the stupid example below << :-))
+-------------------------------------------------------
+v0.0.1 - 01/15/05
+
+int k_dcache_findnext (char * pattern, struct s_dentry * dentry);
+
+This directory search function is concepted to use as
+little memory as possible and to be most flexible
+without any annoying contraints like maximum counts
+for directory entrys or a maximum level for directory
+depth.
+
+The principal idea is that we will always attempt to enter
+the deepest level of the filesystem-tree from the current node
+than can be reached straightly, i.e. without moving to the
+next node of the current level. If the current node is a file,
+then we already are in the deepest level, in case of a directory
+we can go deeper and so on. If we're in a deepest level,
+we match the pattern against all names of the filedentries
+until we have reached the last entry in the current directory,
+where we would return to the parent directory, or we encounter
+another directory to enter. If we have returned to the directory
+of the original node and have reached the last entry
+of that directory, search will be over and will return.
+
+Example search in fictional directory tree,
+directory names are in capital letters, filenames
+in lower case letters:
+
+
+ /ROOT
+ |
+ |-FRUITS         red
+ |       \       /
+ |        -APPLES
+ |        |      \
+ |        |       green
+ |        |        straight
+ |        |       /
+ |        -BANANAS
+ |                \
+ |                 bend
+ |-BREAD
+        \
+	 white
+	 |
+	 brown
+	 |
+	 toasted
+
+In this example we start at root directory and
+then immediately move into "FRUITS", then into
+"APPLES" and search this directory. When we reached
+"green", we will return to the parent directory
+"FRUITS" and move into "BANANAS" and search
+until we come to "bend", then we will move
+to "FRUITS" again and, since "BANANAS" is
+the last entry in the directory "FRUITS"
+we will move to "ROOT" again, where we will
+enter "BREAD" to search until we reach
+"toasted", then leave to "ROOT" again and
+finally quit the search since "BREAD" was
+the last entry of "ROOT". The search function
+always searches from a given entry (through
+s_dentry struct) and returns a s_dentry
+for the next filename match. Thus to do
+a full directory search subsequent calls
+to the search function are necessary
+since it returns on every filename match.
+
+Correction 10/26/04:
+
+1.
+Since we cannot guarantee that every directory
+we read has been sorted with directories first,
+we already need to perform the string-pattern
+comparisions while walking from top directory
+into deepest directory level. This is just
+a slight modification to the above mechanism.
+
+2.
+Of course, searching does not start in root-
+directory but in the directory specified
+as parameter when calling the search-function.

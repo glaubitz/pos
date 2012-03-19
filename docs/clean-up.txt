@@ -1,0 +1,60 @@
+Kernel Code Clean-Up - 11/05/03
+-------------------------------
+
+This document contains guidelines for cleaning-up kernel code
+
+- Lists
+
+  Alot of internal kernel-data is managed in lists
+  (e.g. the mountlist, open files, task etc). As
+  all these lists are principally simple one-dimensional
+  arrays, we should provide some basic list-library
+  with functions managing a list. This will save
+  C-code and will make the list-management more
+  reliable.
+
+- Return Values
+
+  All functions shall either return a pointer or
+  and integer-value. In both cases a failed function-
+  call must return a zero-value to indicate value
+  (either = 0 or NULL).
+
+- Boolean Expressions
+
+  Boolean values are defined through the two
+  preprocessor-definitions "TRUE (-1)" and
+  "FALSE (0)". Whenever a function uses
+  boolean-values these definitions shall
+  be used.
+
+- Names
+
+  All symbols (functions, variables etc) and definitions
+  preced a letter and a "_" in their name. Names have
+  the following categories:
+
+	Letter	Meaning		Example
+	---------------------------------------
+	k_	kernel-symbol	k_getrootdir ()
+	s_	struct-type	s_dir
+	c_	constant	c_MAXNOPENFILES
+	m_	macro		m_memset
+
+  Names should always be short and self-explaining.
+  In case of conversion-functions we normally use
+  the following mask:
+
+  	<oldformat>_to_<newformat>, e.g.:
+
+	time_to_msecs ()
+
+- Function Parameters
+
+  All kernel functions should always internally use
+  either pointers or values as parameters. They
+  must not take strings for values. E.g.: the
+  function k_mount will take only directory-entries
+  as parameters instead of pathnames stored in strings.
+  Only functions which directly interact with user-
+  programs may-use such user-friendly types.

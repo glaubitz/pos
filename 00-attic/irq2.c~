@@ -1,0 +1,77 @@
+/*
+* irq.c
+* pOS - portable Operating System
+* 03/26/02
+*/
+
+#include <kernel.h>
+#include <ASM/schedule.h>
+
+static inline WORD __findirqproc (IRQPROC * irqproc) {
+
+	WORD i;
+
+	for (i = 0; i < __MAX_NIRQPROC; i++)
+		if (__kernel.irqprocs [i] == irqproc)
+			break;
+	return i;
+}
+
+IRQPROC * __addirqproc (IRQPROC * irqproc) {
+
+        return NULL;
+}
+
+IRQPROC * __removeirqproc (IRQPROC * irqproc) {
+
+	WORD iirqproc;
+
+	if ((iirqproc = __findirqproc (irqproc)) != __MAX_NIRQPROC) {
+
+		__kernel.irqprocs [iirqproc] = __kernel.irqprocs [__kernel.nirqprocs - 1];
+		__kernel.nirqprocs--;
+	}
+	else {
+		__setlasterror (__MSG_UNKNOWN_IRQPROC);
+	        return NULL;
+	}
+}
+
+BOOL __enableirqproc (IRQPROC * irqproc, BOOL enable) {
+
+        WORD iirqproc;
+
+	if ((iirqproc = __findirqproc (irqproc)) != __MAX_NIRQPROC) {
+
+                /*
+                        ??? (MISSING CONCEPT):
+                        either deactivate by puttin at end of
+                        irqproc-array and then dec-ing nirqprocs
+                        or by storing enable as boolean for
+                        every proc; the first cannot guarantee
+                        a certain sequence (depedicies, i.e.
+                        getchar from keyboard before putting
+                        to console)
+               */
+	}
+	else {
+		__setlasterror (__MSG_UNKNOWN_IRQPROC);
+	        return NULL;
+	}
+}
+
+void __irq () {
+
+	WORD i = __kernel.nhooks;
+	
+	__kernel.current_ttl--;
+
+	if (__kernel.current_ttl == 0)
+		__schedule ();
+
+	/*
+	while (i != 0) {
+		i--;
+		__kernel.hooks[i].callback ();
+	}*/ // who wrote that crap ???
+}

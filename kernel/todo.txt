@@ -1,0 +1,90 @@
+TODO-List for directory /pos/kernel
+
+03/12/06
+
+console.c:
+
+- just be sure to keep track with the rest of the kernel source
+
+dev.c (and types.h):
+
+- drvstartstop cannot output messages as the console-driver has not
+  init'ed - probably use a basic-printk then
+- shouldn't we have a init-function for the code here ?
+
+mem.c:
+
+- see the list on top of the file 
+- possible BUGS:
+  the compiler might throw a warning in some cases where casting
+  of pointers is performed
+
+  in line 77 and later the compiler might complain about:
+  ((MEMBINFO *) pmem + size + sizeof (MEMBINFO))->pid = c_PID_RESERVED;
+  if so, replace with:
+  ((MEMBINFO *) (pmem + size + sizeof (MEMBINFO)))->pid = c_PID_RESERVED;
+
+  03/12/06: Wow, just stumbled over it again ;) I think the brackets
+  are mandatory in any case !
+
+  another possible BUG, if-clause in line 81:
+  if (((MEMBINFO *) pmem)->size >= size + reserve +
+      (reserve ? sizeof (MEMBINFO) : 0) + sizeof(MEMBINFO)) {
+  the ?: condition might be wrong, i always mix it up :)
+
+  and finally line 100:
+  pmem = m_MEM_GETNEXTFREE(pmem);
+  how can we be sure that m_MEM_GETNEXTFREE will return
+  a memory-block which will contain a valid memory info
+  struct (MEMBINFO)-> we will need a meminit()-function
+  which will prepare the whole memmap
+- we might also add a function to determine the size of the
+  largest/smallest memory block, maybe we should make
+  the getxxxmem () functions more powerful
+
+
+- but anyway, we should drop the whole memory-code and rewrite it
+  (with page-aligned memory block sizes
+  
+  
+  - but anyway, we should drop the whole memory-code and rewrite it
+    (with page-aligned memory block sizes)
+
+
+panic.c:
+
+- adapt to latest version of kernel library
+
+process.c:
+
+- process-management needs larger update, do that when
+  schedule, tasks, signals, time and vfs are fully
+  implemented (it is in fact one of the oldest parts
+  of all the code)
+- write killproc () function
+
+relocate.c:
+
+- find concept and write the routines (pre-last step)
+
+schedule.c:
+
+- 
+
+signal.c:
+
+- finish all functions
+
+sysinit.c:
+
+- adapt to all kernel routines, also we need an
+  idle process
+
+time.c:
+
+- debug ! (see TODO on top of file)
+- write ticks_to_msecs / msecs_to_ticks / gettickcount
+
+vfs.c:
+
+- implement concept from /docs/vfsr3.txt

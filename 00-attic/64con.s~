@@ -1,0 +1,406 @@
+/*
+	64con.s
+	c64 console driver
+	pOS - portable Operating System
+        03/10/02
+	(c) A.Glaubitz
+*/
+
+
+#define __VICBASE $d400
+#define __SCRBUF  $0400
+#define __NCOLS 40
+#define __NROWS 25
+
+#include <driver.h>
+
+/* ESCAPE CODES */
+
+#define __CHRESCAPE $00
+#define __ESCCSRUP  $00
+#define __ESCCSRDWN $00
+#define __ESCCSRRGT $00
+#define __ESCCSRLFT $00
+#define __ESCRETURN $00
+#define __ESCBLANK  $00
+
+/*
+BUGS:
+
+- sta(PTR) instruction does NOT exist, sta(PTR),y is ZP only
+        --> use self-modifying code in such cases, this is faster
+            anyway :)
+- avoid compliacted calculating of screen address
+        --> yep, done
+- add functions to move cursor and to scroll
+- watch for special chars like '\r' (we're now using escape-codes)
+- disable taskswitching when using GLOBAL variables
+- characters are not converted from ASCII to screencode yet
+
+NOTES:
+
+- the color ram from $d800 stores the color value of
+  each character displayed, so we should consider
+  resetting it, too, when clearing the screen
+- we should introduce UNIX escape codes to move
+  the cursor, clear the screen and other stuff
+  (work in progress)
+- we could use two 25-byte tables with the lo and
+  hi-byte values of the addresses of the first
+  column of the screen in ram, this way we could
+  simple load the address instead of calculating
+  it
+*/
+
+.export __64con_init
+.export __64con_exit
+.export __64con_putc
+.export __64con_getc
+
+__csrpos:
+
+.word   0
+
+__tmpword:
+
+.word   0
+
+__tmpword2:
+
+.word   0
+
+/* status flag-byte:
+
+   0  0  0  0  0  0  0  0
+   X  X  X  X  X  X  RDY ESC
+
+   X = reserved
+   RDY = ready, driver has initialized
+   ESC = escape mode
+
+*/
+
+__status:
+
+.byte   0
+
+; ----------------------------------------------
+
+__64con_init:
+
+	sei
+;;      lda #__VICBASE + $18
+
+;;      adc #$18 ; offset of text buffer pointer
+;;      stx <__s + 1
+;;      sty >__s + 1
+
+        lda #>__SCRBUF
+        lsr
+	lsr
+	sta <__tmpword
+
+	lda __VICBASE + $18
+	and #$0f
+	ora $<__tmpword
+	
+	sta __VICBASE + $18
+
+; what must be done further ?
+
+	cli
+	lda __status
+	ora #$02 ; set driver status RDY-flag
+	sta __status
+	clc ; initialization successful
+	rts
+
+; ----------------------------------------------
+
+__64con_exit:
+
+	; do further exit code here, if needed
+
+	lda __status
+	and #$fd
+	sta __status
+	clc
+	rts
+
+; ----------------------------------------------
+
+__64con_putc:
+
+	lda __status
+	and #$02
+	cmp #$02 ; RDY-flag set ??
+	beq __putc_ready ; yes, go on
+	sec ; NO, return with error
+	rts
+
+__putc_ready:
+
+	lda __status
+	and #$01
+	cmp #$01 ; check for ESC-flag set
+	bne __putc_noesc ; not set
+
+	jmp __putc_doesc
+
+__putc_noesc:
+
+	pla ; fetch character
+	cmp __CHRESCAPE ; is it escape code
+	bne __putc ; NO
+	lda __status
+	ora #$01 ; yes, set ESC-flag
+	sta __status
+	clc
+	rts
+
+__putc:
+
+        pha ; push character back to stack
+
+; determine screen address from cursor position
+
+; adr = __SCRBUF + (x * __NCOLS) + y
+
+        ldx <__csrpos
+        stx <__tmpword
+        ldy >__csrpos
+        lda __scr_coladr_hibyte,y
+        sta >__tmpword
+
+        pla ; fetch character back from stack
+
+        jsr __asc2poke
+
+        ldy #$00
+        sta (__tmpword),y
+
+        ldx <__csrpos
+        inx
+        stx <__csrpos
+        cpx #__NCOLS
+        bcc __putc_done ;; check this, carry clear if below or equal ?
+        ldx #$00
+        stx <__csrpos
+        ldy >__csrpos
+        iny
+        sty >__csrpos
+        cpy #__NROWS
+        bcc __putc_done ;; bcc, s.a.
+        ldy #__NROWS
+        sty >__csrpos
+        jsr __scroll_up
+
+__putc_done:
+
+	clc
+	rts
+
+__putc_doesc:
+
+	pla ; fetch character
+
+	cmp #__ESCCSRUP
+	beq __putc_doesc_escup
+	cmp #__ESCCSRDWN
+	beq __putc_doesc_escdwn
+	cmp #__ESCCSRRGT
+	beq __putc_doesc_rgt
+	cmp #__ESCCSRLFT
+	beq __putc_doesc_lft
+	cmp #__ESCRETURN
+	beq __putc_doesc_return
+	cmp #__ESCBLANK
+	beq __putc_doesc_blank
+
+	; no valid escape-character found, disable escape mode, return error
+
+	lda __status
+	and #$fd
+	sta __status
+	sec
+	rts
+
+__putc_doesc_escup:
+
+	ldy >__csrpos
+	cpy #$00
+
+	beq __putc_doesc_escup_isfirstrow
+	dey
+	sty >__csrpos
+
+__putc_doesc_escup_isfirstrow:
+
+	clc
+	rts
+
+__putc_doesc_escdwn:
+
+	ldy >__csrdwn
+	cpy #__NROWS
+	beq __putc_doesc_escdwn_islastrow
+	iny
+	sty >__csrpos
+	clc
+	rts
+
+__putc_doesc_escdwn_islastrow:
+
+;; copy all lines to line up-next
+
+	clc
+	rts
+
+;;__no_scroll:
+
+;;      inc >__csrpos
+;;      clc
+;;      rts
+
+__char_delete:
+
+	ldx <__csrpos
+	ldy >__csrpos
+
+	cpy #$00
+	bne __no_zero_col
+	cpx #$00
+	beq __zero_row
+	ldy #__NCOLS
+	dex
+	jmp __del_char
+
+__no_zero_col:
+
+	dey
+
+__del_char:
+
+	lda #$20 ; <space>
+	pha
+	jmp __putc
+
+__zero_row:
+
+	clc
+	rts
+
+__putc_doesc_escblank:
+
+	ldx #$00
+
+__putc_doesc_escblank_blnknext:
+
+	sta __SCRBUF, x
+	sta __SCRBUF + $100, x
+	sta __SCRBUF + $200, x
+	sta __SCRBUF + $300, x
+	inx
+	bne __putc_doesc_escblank_blnknext
+
+	clc
+	rts
+
+__scroll_up:
+
+	ldx #$00
+
+__scroll_up_l1:
+
+	lda $428,x
+	sta $400,x
+	lda $450,x
+	sta $428,x
+	lda $478,x
+	sta $450,x
+	lda $4a0,x
+	sta $478,x
+	lda $4c8,x
+	sta $4a0,x
+
+	lda $4f0,x
+	sta $4c8,x
+	lda $518,x
+	sta $4f0,x
+	lda $540,x
+	sta $518,x
+	lda $568,x
+	sta $540,x
+	lda $590,x
+	sta $568,x
+
+	lda $5b8,x
+	sta $590,x
+	lda $5e0,x
+	sta $5b8,x
+	lda $608,x
+	sta $5b8,x
+	lda $630,x
+	sta $608,x
+	lda $658,x
+	sta $630,x
+
+	lda $680,x
+	sta $658,x
+	lda $6a8,x
+	sta $680,x
+	lda $6d0,x
+	sta $6a8,x
+	lda $6f8,x
+	sta $6d0,x
+	lda $720,x
+	sta $6f8,x
+
+	lda $748,x
+	sta $720,x
+	lda $770,x
+	sta $748,x
+	lda $798,x
+	sta $770,x
+	lda $7c0,x
+	sta $798,x
+
+	lda #$20 ; empty character
+	sta $7c0,x
+	
+	cpx #$28
+	bne __scroll_up_l1
+
+	rts
+
+__scr_coladr_lobyte:
+
+.byte >__SCRBUF, >__SCRBUF + $28, >__SCRBUF + $50, >__SCRBUF + $78, >__SCRBUF + $a0
+.byte >__SCRBUF + $c8, >__SCRBUF + $f0, >__SCRBUF + $118, >__SCRBUF + $140, >__SCRBUF + $168,
+.byte >__SCRBUF + $190, >__SCRBUF + $1b8, >__SCRBUF + $1e0, >__SCRBUF + $208, >__SCRBUF + $230,
+.byte >__SCRBUF + $258, >__SCRBUF + $280, >__SCRBUF + $2a8, >__SCRBUF + $2d0, >__SCRBUF + $2f8,
+.byte >__SCRBUF + $320, >__SCRBUF + $348, >__SCRBUF + $370, >__SCRBUF + $398, >__SCRBUF + $3c0
+
+__scr_coladr_hibyte:
+
+.byte >__SCRBUF, >__SCRBUF + $28, >__SCRBUF + $50, >__SCRBUF + $78, >__SCRBUF + $a0
+.byte >__SCRBUF + $c8, >__SCRBUF + $f0, >__SCRBUF + $118, >__SCRBUF + $140, >__SCRBUF + $168,
+.byte >__SCRBUF + $190, >__SCRBUF + $1b8, >__SCRBUF + $1e0, >__SCRBUF + $208, >__SCRBUF + $230,
+.byte >__SCRBUF + $258, >__SCRBUF + $280, >__SCRBUF + $2a8, >__SCRBUF + $2d0, >__SCRBUF + $2f8,
+.byte >__SCRBUF + $320, >__SCRBUF + $348, >__SCRBUF + $370, >__SCRBUF + $398, >__SCRBUF + $3c0
+
+
+
+
+; ----------------------------------------------
+
+__64con_getc:
+
+;; see "Commodore 64 - Die besten Tips und Tricks", page 91ff
+
+; reads status from keyboard ports A and B
+; returns ASCII character-code or ESC code sequence (i.e. CSR-LEFT)
+; must be somehow called during interrupt as the keyboard
+; does NOT generate any signal, so we have to check it periodically
+
+	rts

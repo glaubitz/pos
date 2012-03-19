@@ -1,0 +1,7 @@
+/*
+* pOS
+* pipe.c
+* jan., 26 2001
+*/
+
+#include <kernel.h>

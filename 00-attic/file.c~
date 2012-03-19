@@ -1,0 +1,7 @@
+/*
+* pOS
+* file.c - general file i/o
+* 10/02/01
+*/
+
+#include <kernel.h>

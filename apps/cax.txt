@@ -1,0 +1,53 @@
+Cross and Circle (cax) Console Version (pOS-compatible also)
+
+features:
+
+- display:
+   the gamefield is diplayed using numbers from 1 through
+   9 one the console screen like follows:
+
+   1 2 3  where number x represents an empty field
+   4 o 6  where 'o' represents a field marked with a circle
+   7 8 x  where 'x' represents a field marked with a circle
+
+   typical display output:
+
+   #: cax (circle and x (=cross))
+
+   circle and cross - 0.2.2 - (c) adrian glaubitz
+
+   who should start (1=you/2=me) ?
+   okay, you (i) start.
+   you are using cross 'x' // (determined by random number)
+
+   1 2 3
+   4 5 6
+   7 8 9
+
+   which field do you want to set ? 2
+
+   1 x 3
+   4 5 6 // cpu sets 'o' immediately without displaying
+   7 o 9 // step after player has but before cpu has set
+
+   ...
+
+   x x x
+   o o x
+   o x o
+
+   you (i) win. start over (y/n) ?
+
+   #: (answered with n)
+
+- memory:
+   the whole gamefield is stored in a 9 byte array;
+   the bytes may have the value 0, binary 00001111 or binary 00001111
+
+- won row:
+   a row is won by the user if:
+        a AND b AND c = 00001111
+   a row is won by the cpu if:
+        a AND b AND c = 11110000
+
+   there are 8 rows to check

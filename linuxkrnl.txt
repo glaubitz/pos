@@ -1,0 +1,74 @@
+CORE_FILES	=kernel/kernel.o mm/mm.o fs/fs.o ipc/ipc.o
+NETWORKS	=net/network.o
+DRIVERS		=drivers/block/block.o \
+		 drivers/char/char.o \
+		 drivers/misc/misc.o \
+		 drivers/net/net.o \
+		 drivers/media/media.o
+LIBS		=$(TOPDIR)/lib/lib.a
+SUBDIRS		=kernel drivers mm fs net ipc lib
+
+
+kernel is build from
+
+obj-y     = sched.o dma.o fork.o exec_domain.o panic.o printk.o \
+	    module.o exit.o itimer.o info.o time.o softirq.o resource.o \
+	    sysctl.o acct.o capability.o ptrace.o timer.o user.o \
+	    signal.o sys.o kmod.o context.o
+
+
+mm is build from
+
+obj-y	 := memory.o mmap.o filemap.o mprotect.o mlock.o mremap.o \
+	    vmalloc.o slab.o bootmem.o swap.o vmscan.o page_io.o \
+	    page_alloc.o swap_state.o swapfile.o numa.o oom_kill.o \
+	    shmem.o
+
+fs is build from
+
+obj-y :=	open.o read_write.o devices.o file_table.o buffer.o \
+		super.o  block_dev.o stat.o exec.o pipe.o namei.o fcntl.o \
+		ioctl.o readdir.o select.o fifo.o locks.o \
+		dcache.o inode.o attr.o bad_inode.o file.o iobuf.o dnotify.o \
+		filesystems.o
+
+
+network is build from /net/*.c
+
+
+lib is build from
+
+obj-y := errno.o ctype.o string.o vsprintf.o brlock.o cmdline.o
+
+kernel needs these libs, vsprintf for example to format messages
+to console
+
+
+
+console is implemented as a charater device driver
+
+        console implements:
+
+        // note:  ln -s /linux/include/asm-i386 /linux/include/asm
+        #include <asm/io.h>    // very interesting macros for port i/O
+        #include <asm/system.h> // macros for i386 register manipulation
+        #include <asm/uaccess.h>
+        #include <asm/bitops.h>
+
+        #include <asm/linux_logo.h>
+
+
+CONCLUSION:
+system specific system routines are also defined as macros in 
+/linux/include/asm-MACHINE
+
+What ya still need:
+
+asmlinkage ??
+- how are symbols resolved using virtual memory
+  (when does the kernel know when a address needs
+   to be translated-> what object code is linked
+   to linux apps ???)
+
+learn all gcc asm constraints by heart !!!
+

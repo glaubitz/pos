@@ -1,0 +1,77 @@
+Design flaws in third party operating systems
+(which should not find their way into pOS :) )
+11/04/02
+
+1.
+  Some processes may not be killed as they are
+  using certain devices or system resources
+  and will block the whole system when they
+  crash
+  - found in Windows all versions >= 4.x
+  - processes must always be able to be
+    killed, if necessary the system should
+    reset the appropiate hardware/resource
+
+2.
+  When a hardware resource is being accessed
+  but not responding immediately, it locks up
+  all programs trying to access it
+  - found in Windows all versions >= 4.x
+  - the driver-api must restrict access
+    to hardware resources which are not
+    ready (all drivers must have a ready
+    status flag/byte-> we must introduce
+    error messages for interaction of
+    driver-api and driver), also consider
+    using semaphores
+
+3.
+  When trying to copy files to a target which
+  cannot hold the source files due to insufficient
+  free space, the operating system/file browser will
+  notice it at the point where some files have been
+  copied already and the target is finally full
+  - found in Windows all versions >= 4.x, probably Linux also
+  - the file browser/operating system should check
+    the target for sufficient free space to hold
+    all the files
+
+4.
+  Many operating systems have too many parameters to
+  be configured which can easily confuse the user
+  - found in both Windows (>= 4.x) and Linux
+  - the operating system should be able to
+    determine most custom parameters automatically,
+    the configuration files should be stripped
+    down to settings desired to be customizable
+    (eg: host-name, text-color)
+
+5.
+  Alot of operating systems come with too much
+  software which is needed by the operating
+  system and restrict the user in it's freedom
+  of choice regarding the software
+  - found in Linux and Windows
+  - the operating system should only consist
+    of a operating system core, a system
+    c-library and an initialization program
+    (ie: init) which can be replaced by
+    any other program desired to be run
+    on startup
+
+6.
+  The operating system allows a process to load
+  a large file into memory though the physical
+  memory is insufficient to hold it
+  - found in Windows (app: eg: Wordpad)
+  - pOS only tried to load data into memory
+    after it's been successful in allocating
+    the required amount of memory
+
+7. Windows Operating Systems abort copying multiple
+   files when it could not copy one or more files.
+   pOS (or better it's shell) should prompt the user
+   if he wants to continue or abort copying, after
+   the copy process it should display the files
+   the shell was not able to copy. (And display
+   the files been copied (like the AmigaOS CLI :)).

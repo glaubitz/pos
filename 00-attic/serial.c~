@@ -1,0 +1,46 @@
+/*
+* pOS
+* mar., 26 2001
+*/
+
+#include <ASM/io.h>
+#include <ASM/sys.h>
+#include <kernel.h>
+
+HFILE opencomm (BYTE portid, WORD speed, WORD flags) {
+
+
+
+
+}
+
+BOOL closecomm (HFILE comm) {
+
+        return FALSE;
+}
+
+#ifdef __16BITMEM
+WORD readcomm (HFILE comm, WORD count) {
+
+        return 0;
+}
+
+WORD writecomm (HFILE comm, WORD count) {
+
+        return 0;
+}
+#else
+#ifdef __32BITMEM
+DWORD readcomm (HFILE comm, DWORD count) {
+
+        return 0;
+}
+
+DWORD writecomm (HFILE comm, DWORD count) {
+
+        return 0;
+}
+#endif
+#endif
+
+

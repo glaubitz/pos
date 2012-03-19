@@ -1,0 +1,23 @@
+About the kernel mode:
+
+When the kernel is in kernel mode, all tasks
+are stopped and all devices can be used by
+the kernel regardless whether they have been
+opened by any process or not.
+
+The kernel is usually in kernel mode during
+initialization and during shutdown. It may
+also be in kernel mode when an error occurs
+and the kernelpanic () routine is executed. 
+
+=> there are two functions:
+
+1. k_enter_kmode ()
+2. k_leave_kmode ()
+
+they disable (1.)/enable (2.) the following:
+
+- the scheduler
+- maskable interrupts
+- device control by process (kernel controls all device in kmode)
+- (what else ?)

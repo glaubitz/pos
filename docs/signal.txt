@@ -1,0 +1,19 @@
+Signals in pOS 0.0.1
+--------------------
+
+Signals are realized thru call-back functions which
+will be called on leaving the timer-interrupt.
+
+
+__64irq:
+
+	/* other handlers here */
+
+	cli
+	jmp __current->signalfn [current->signal];
+
+
+in schedule ():
+
+	if (proc->signal && proc->state != UNINTERRUPTIBLE)
+		proc->state = RUNNING;

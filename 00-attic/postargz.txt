@@ -1,0 +1,6 @@
+// tar -cf ./pos.tar ./pos
+// gzip ./pos.tar
+
+// better:
+
+tar -cf ./pos.tar.gz ./pos --gzip

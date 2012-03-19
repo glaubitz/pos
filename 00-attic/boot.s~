@@ -1,0 +1,157 @@
+;
+; pOS Boot Loader - C64
+; Version 0.0.2
+; date: mar., 23 2001
+;
+; history:
+;
+; 0.0.1, 01/26/01: initial release, not runnable
+; 0.0.2, 03/23/01: dozens of bugs fixed, should work now
+
+	org $0801 ; set to start of BASIC buffer
+
+	
+; <adress next line lo, hi>,<line number lo, hi>,"SYS",<Space>,"2","0","6","1",0,0
+	.byte $0c, $08, $01, $00, $9e, $20, $32, $30, $36, $31, $00, $00
+
+; loader entry point
+
+	ldx #<loaderinfo
+	ldy #>loaderinfo
+	jsr stdout ; output kernel info
+
+	ldx #<bootmsg
+	ldy #>bootmsg
+	jsr stdout
+
+	ldx #<kernelname ; set kernel image file name
+	ldy #>kernelname
+	lda #$06 ; this routine needs string length in accu
+	jsr $ffbd ; SETNAM
+
+	lda #$00 ; logical file number 15
+	ldx #$08 ; drive 8
+	ldy #$00 ; secundary adress 15
+	jsr $ffba ; SETLFS
+	
+	lda #$00
+;	sta $0a ; load flag, must be set ???
+	ldx #$00 ; target adress lo-byte
+	ldy #$c0 ; target adress hi-byte
+	jsr $ffd5 ; LOAD
+
+	bcc kernel ; when carry clear->success
+
+	ldx #<msgfail
+	ldy #>msgfail
+	jsr stdout
+	
+	lda #$0f ; LFN 15
+	ldx #$08 ; drive 8
+	ldy #$0f ; SECA 15
+	jsr $ffba ; SETLFS
+	
+	jsr $ffc0 ; OPEN
+	ldx #$0f ; LFN 15
+	jsr $ffc6 ; input from logical file 15
+	jsr $ffcf ; get first character
+	sta <errorcode ; as ASCII Code
+	jsr $ffcf
+	sta >errorcode
+	jsr $ffcc ; change to std. output
+	lda #$0f ; LFN 15
+	jsr $ffc3 ; close floppy channel 15
+	
+	jsr checkerror ; retrieves errorcode in accu
+	cmp #$01 ; file not found ?
+	bne diskpanic ; no, then we have a disk problem
+	
+	ldx #<errors
+	ldy #>errors
+	jsr stdout
+	rts ; leave to basic
+
+diskpanic:
+
+	ldx #<errors + 18
+	ldy #>errors + 18
+	jsr stdout
+	rts
+
+textadress:
+	.byte $00, $00
+
+stdout:
+
+	stx <textadress
+	sty >textadress
+	ldy #$00
+  -	lda textadress,y
+	cmp #$00
+	beq +
+	jsr $ffd2
+	iny
+	cpy #$ff
+	bne -
+  +	rts
+
+checkerror:
+
+	lda errorcode
+	cmp #"6"
+	bne diskerror
+	lda errorcode + 1
+	cmp #"2"
+	bne diskerror
+	lda #$01 ; "62, FILE NOT FOUND"
+	rts
+
+diskerror:
+	
+	lda #$02 ; disk error
+	rts
+
+
+kernel:
+	
+	ldx #<msgok
+	ldy #>msgok
+	jsr stdout
+
+	jmp $c000
+
+
+loaderinfo:
+	.text	"KERNEL BOOT LOADER C64"
+	.byte	$0a
+	.text	"(C) 2000-2001 A.GLAUBITZ"
+	.byte	$0a
+	.text	"VERSION 0.0.3"
+	.byte	$0a
+	.text	"DATE: APR., 12 2001"
+	.byte	$0a, $00
+
+bootmsg:
+	.text	"TRYING TO LOAD KERNEL "
+	.byte	$00
+
+msgok:
+	.text	"[OK]"
+	.byte	$0a, $00
+
+msgfail:
+	.text	"[FAILED]"
+	.byte	$0a, $00
+
+errors:
+	.text	"KERNEL IMAGE NOT FOUND"
+	.byte	$0a, $00
+	.text	"DISK ERROR"
+	.byte	$0a, $00
+
+kernelname:
+	.text	"KERNEL"
+
+errorcode:
+	.byte	$00, $00
+

@@ -1,0 +1,35 @@
+TODO-List for POS/ARCH/C64:
+
+11/12/02
+
+all assembler code fragments:
+- need to declare referenced kernel functions as "extern"
+  or include kernel header files !
+
+- boot.s
+  nothing to do, is fully working, but give it some
+  cosmetic refinements (both code and output)
+- c64.h
+  is okay, but add new definitions as
+  soon as needed by new kernel features
+- entry.s
+  is actually complete, but has not been
+  tested to work and not been adapted
+  to all new kernel features yet
+- irq.s
+  MISSING: check for break-flag to tell a sw-irq from a hw-irq,
+  it may also needed to support timer incrementing
+- jmptable.h
+  add new kernel function definitions when they arise (see POS/KERNEL/TODO.TXT)
+- jmptable.s
+  remove all location labels but the first one in this code, they
+  are supercilious and not needed by the assembler
+- nmi.s
+  write the code here what the software should do when an NMI
+  rises, i.e. CIA, Restore-Key or Expansion Port; proposal: system reset
+
+note on jmptable.h and jmptable.s:
+
+as the kernel design is still changing quite often during
+development, the jumptable will be finally updated when
+kernel-design is complete.

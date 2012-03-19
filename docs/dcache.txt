@@ -1,0 +1,117 @@
+dcache - Directory cache for VFS - 11/28/2003
+---------------------------------------------
+
+In order to speed-up directory look-up and
+to access direcories in a more reliable
+and flexible way I decided to integrate
+a small directory cache into the VFS-layer.
+
+The look-ups are speeded up since all the
+directory data that has been accessed once
+from disk will be accessed subsequently
+from memory.
+
+The higher reliability and flexibilty is
+archived by depicting the directory-trees
+physically in memory with any directory-entry
+being one data-struct in memory and avoiding
+using pathnames (which are transfered into
+dentry-data from the user-inputted direcory
+path) which require alot of string-operations
+to process. Moreover string operations
+are more septible to program-errors and
+code-bugs.
+
+The dcache-concept
+------------------
+
+struct s_superblock {
+
+	int fstype;
+	unsigned long dentrycount; // do we need this ???
+	struct s_dentry rootdir; // dentry of root-directory
+}
+
+struct s_dir {
+
+	struct s_dentry entries [c_MAXDIRENTRY]; // this directory's entries
+	unsigned long entrycount;
+	int cache_expired; // if expired, this directory can be overwritten in cache
+}
+
+struct s_dentry {
+
+	char name [c_MAXFILENAMELENGTH];
+	struct s_dentry * parent;
+	unsigned char attr; // d-rwx-rw e.g
+	unsigned long size; // filesize (= 0 for dirs)
+	int in_cache; // if this dentry is a dir, is it in dcache ?
+			// may also be used for a file-cache later
+	int update;
+
+	union {
+
+		struct s_dir * cached_dir;
+		// struct s_cachefile * cached_file;
+	};
+
+	union  {
+		
+		struct s_1541fs_dentry 1541fs_dentry; // dentry of 1541-fs-driver
+		// struct s_myfs_dentry myfs_dentry // dentry of custom fs-driver
+	};	
+};
+
+/*
+ * Mounting procedure:
+ * 1. check for valid parameters
+ * 2. read superblock and validate
+ * 3. read rootdir of new fs into dcache
+ * 4. bind into VFS-tree
+ */
+
+/* Unmounting procedure:
+ * 1. check for valid parameters
+ * 2. check for open files
+ * 3. remove mountentry from mountlist
+ * 4. set keep_in_cache to FALSE
+ */
+
+/*
+ * Opening a file /fs/file.c/open ()
+ * 1. convert pathname into dentry, start in VFS-root dir in cache
+ *    a. read current part of pathname and try to fetch dentry-ptr in current directory
+ *    b. if dentry with that name cannot be found, exit with error
+ *    c. are we at end of pathname, if yes exit and return (if (i == strlen (pathname)))
+ *    d. advance to next part of pathname, try to change into direcotry of last dentry
+ *    e. if dentry of sub-directory is found, read the new subdir into dcache
+ *    f. if changing directory fails, exit with error
+ * 2. return dentry inside s_file-struct
+ */
+
+/* Reading/Writing a file /fs/file.c/read/write ()
+ * 1. call read () from fs-api (e.g. pfs) with fs_struct from dentry
+ */
+
+/* Closing
+ * 1. Update dentry in dcache (re-read from disk)
+ */
+
+/*
+ * how does the cache-data look like:
+ *
+ *         mountlist
+ *          (contains s_device* / s_file* / s_pipe *, mountpoint, sourcepoint and superblock)
+ *
+ *         superblock
+ *          (contains first dentry (rootdir), fs_information etc)
+ *
+ *         root-dentry
+ *          (contains reference (either memory or disk-ref) to root-dir)
+ *
+ *         root-directory
+ *          (contains dentry-struct for each directory-entry)
+ *
+ *         dentries
+ *          (contain refs and infos to files and directories either in cache or on disk)
+ */

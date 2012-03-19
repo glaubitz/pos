@@ -1,0 +1,19 @@
+* pOS
+* How kernel symbols are exported and made
+* available for applications 
+* jun., 25 2001
+
+Kernel symbols are written to a map-file "kernel.map"
+during kernel compilation. Then a small tool called
+map2inc is invoked that creates a header file from
+this map-file that is used by pos.c which is then
+built with the symbols from header file.
+
+NOTE on 09/02/2002:
+for compatibility reasons between different kernel
+versions i have decided to abandon this technique
+for kernel symbols. we are now using a simple
+jump-table at the top of the kernel code
+(even before the entry-code). the first jump-
+entry of this table calls the (re-)booting
+code.

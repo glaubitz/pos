@@ -1,0 +1,26 @@
+Commodore 64 Memory information
+
+
+SP = Offset in 0100
+
+SP = $F
+
+tsx
+txa
+eor $ff ; Akku enthält jetzt n Bytes in Stack
+	; von $FF-$0F
+
+Wenn Stack überläuft, wird der Task gekillt.
+
+Memmap, eine Variable aller Pages als Bitmap:
+
+0002-00ff frei
+0010-01ff Stack
+0020-cfff frei
+d000-dfff I/O
+	d000 VIC
+	d400 SID
+e000-ffef frei
+fffa-fffb NMI
+fffc-fffd Reset
+fffe-ffff IRQ

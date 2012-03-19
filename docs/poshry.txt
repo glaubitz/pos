@@ -1,0 +1,28 @@
+Object hierarchy in pOS, Kernel v0.0.1
+--------------------------------------
+
+                                     
+                                                   
+                     cpu-------------------------s_task
+                      |                            |
+       physical-------------------s_mem----------s_proc
+       memory         |             |          /   |
+                      |             |   -------    |
+                      |             |  /           |
+                      -----------s_kernel--------s_file---------
+                                                   |           |
+                                                   |           |
+                                                   |           |
+                                                s_mount    s_device
+                                                   |           |
+                                                s_device       |
+                                                   |           /
+                                                    \         /
+						     \       /
+						      \     /
+						     s_driver
+						         |
+							 |
+					             physical
+						     device
+

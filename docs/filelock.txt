@@ -1,0 +1,22 @@
+Put the concept for filelocking here - 06/26/05
+
+Note: The locking for devices is also regulated
+by the filelocking. (That's why user-programs
+cannot access device directly with the
+functions in kernel/dev.c). Other system
+resources may also use locking when represented
+as files.
+
+As for version 0.0.1 there won't be any more sophisticated
+testings whether the attempted file-openmode matches
+with the current file-state (e.g. when the file
+has been opened previously with OPENEXCLUSIVLY
+it should fail).
+
+File open-modes:
+
+- OPENREADONLY	..01
+- OPENWRITEONLY ..10
+- OPENREADWRITE ..11
+- OPENEXCLUSIVLY ..1xx
+- ...

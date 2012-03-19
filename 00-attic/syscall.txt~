@@ -1,0 +1,31 @@
+/*
+* syscall.txt - 01/04/01
+* pOS - portable Operating System
+* information about calling kernel
+* routines from pOS static library
+* (pos.c)
+*/
+
+
+// the following 3 functions reside in BIOS (arch/<MACHINE>/bios.S)
+
+void __cdecl LoadParam (...); // loads (pushes) stack with params
+void __cdecl SysCall (WORD routineid); // calls kernel routine
+DWORD __cdecl SaveParam (buffer, BYTE numbytes); // fetches results from stack
+
+
+BOOL	ReadFile (HFILE file) {
+
+	BYTE buffer[sizeof(_HFILE) + sizeof(BOOL))];
+	LoadParam (file);
+	SysCall (KERNEL_READFILE);
+	SaveParam (buffer, sizeof(_HFILE));
+	return (BOOL) buffer[0]; // buffer[0] = highest stack value
+}
+
+/* Questions:
+1. how to return the return value of a function (pointer ?)
+	- what would be return value of SaveParam (...) then ?
+2. how to call c-compiled functions (kernel is c) in assembler
+	(SysCall(), LoadParam(), SaveParam())
+*/

@@ -1,0 +1,15 @@
+Pipes in pOS - 06/15/05
+-----------------------
+
+The pipe-concept of pOS is the standard one used
+in many -ix operating systems. A process calls
+pipe which returns two file-structs, one for
+reading and one for writing the pipe. The process
+then can pass one of the structs to another process
+for interprocess communication (IPC).
+
+Pipe is simply a character device which consists mainly
+of a FIFO-buffer which is written by one process
+and read by another, of course the reading process
+always calling suspend once the buffer is empty.
+Those pipes are called named pipes in Unix.
