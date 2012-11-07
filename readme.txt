@@ -22,13 +22,13 @@ Get the latest kernel versions, kernel-ports for other hardware,
 additional applications, online documents and support on the
 pOS-homepage at:
 
-		http://home.arcor.de/adi007/pOS
+		http://userpage.physik.fu-berlin.de/~glaubitz/pos/
 
 If you are interested in developing applications for pOS or
 if you want to join the pOS-kernel development, read to the
 pOS-developer documents at:
 
-		http://home.arcor.de/adi007/pOS/dev
+		http://userpage.physik.fu-berlin.de/~glaubitz/pos/ftp/posdevdocs/index.html
 
 Bugs:
 If you spot any bugs in the pOS version you are running, just drop
