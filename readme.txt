@@ -10,9 +10,10 @@
  README file (PRELIMENARY) for version 0.0.1
 
 License/Copyright:
-This piece of software can be freely copied and distributed in any ways.
-It must not be changed or disassembled or distributed for money without
-the authors permission.
+This software is covered by the GNU General Public License v2. It
+may be copied free of charge, modified and redistributed under
+the terms of the GPLv2 provided in the COPYING file provided
+with this software.
 
 (c) 2000-2005 Adrian Glaubitz
 
